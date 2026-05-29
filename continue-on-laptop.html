@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mosh — Продолжить работу на ноутбуке</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cq-orange: #FF6B35;
+      --cq-dark:   #1A1A2E;
+      --cq-mid:    #16213E;
+      --cq-light:  #E0E0E0;
+      --cq-green:  #4CAF50;
+      --cq-red:    #F44336;
+      --cq-yellow: #ffb347;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, var(--cq-dark) 0%, var(--cq-mid) 100%);
+      color: var(--cq-light);
+      min-height: 100vh;
+      padding: 3rem 1.5rem 5rem;
+      line-height: 1.6;
+    }
+
+    .wrap { max-width: 820px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 3rem; }
+    .badge {
+      display: inline-block;
+      background: rgba(255,107,53,0.15);
+      border: 1px solid rgba(255,107,53,0.4);
+      color: var(--cq-orange);
+      padding: .4rem 1.2rem;
+      border-radius: 999px;
+      font-size: .8rem;
+      letter-spacing: 1px;
+      margin-bottom: 1.5rem;
+    }
+    h1 { font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 800; margin-bottom: .8rem; }
+    h1 span { color: var(--cq-orange); }
+    .subtitle { color: #888; font-size: 1.05rem; max-width: 560px; margin: 0 auto; }
+
+    /* Steps */
+    .step {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 1.8rem 1.8rem 1.6rem;
+      margin-bottom: 1.4rem;
+      position: relative;
+      transition: border-color .2s;
+    }
+    .step:hover { border-color: rgba(255,107,53,0.35); }
+
+    .step-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    .step-num {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--cq-orange); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1.05rem; flex-shrink: 0;
+    }
+    .step-title { font-size: 1.15rem; font-weight: 600; }
+    .step p { color: #aaa; font-size: .95rem; margin-bottom: .6rem; }
+
+    /* Code block + copy button */
+    .code {
+      position: relative;
+      background: #0d1117;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 1rem 3.2rem 1rem 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: .88rem;
+      color: #c9d1d9;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin-top: .5rem;
+    }
+    .copy-btn {
+      position: absolute; top: .6rem; right: .6rem;
+      background: rgba(255,107,53,0.15);
+      border: 1px solid rgba(255,107,53,0.4);
+      color: var(--cq-orange);
+      border-radius: 6px;
+      padding: .3rem .6rem;
+      font-size: .75rem;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .copy-btn:hover { background: rgba(255,107,53,0.3); }
+    .copy-btn.done { color: var(--cq-green); border-color: var(--cq-green); background: rgba(76,175,80,0.15); }
+
+    /* Callouts */
+    .callout {
+      border-radius: 12px;
+      padding: 1.2rem 1.4rem;
+      margin: 1rem 0;
+      font-size: .92rem;
+      display: flex; gap: .8rem; align-items: flex-start;
+    }
+    .callout .ico { font-size: 1.3rem; flex-shrink: 0; line-height: 1.2; }
+    .callout.warn  { background: rgba(244,67,54,0.1);  border: 1px solid rgba(244,67,54,0.35); }
+    .callout.info  { background: rgba(255,179,71,0.08); border: 1px solid rgba(255,179,71,0.3); }
+    .callout.ok    { background: rgba(76,175,80,0.08);  border: 1px solid rgba(76,175,80,0.3); }
+    .callout strong { color: #fff; }
+
+    .cycle {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: .6rem;
+    }
+    .cycle .col h4 { font-size: .85rem; color: var(--cq-orange); margin-bottom: .5rem; text-transform: uppercase; letter-spacing: 1px; }
+    @media (max-width: 600px) { .cycle { grid-template-columns: 1fr; } }
+
+    .divider { text-align: center; color: #555; margin: 3rem 0 1.5rem; font-size: .85rem; letter-spacing: 2px; text-transform: uppercase; }
+
+    footer { text-align: center; color: #555; font-size: .85rem; margin-top: 3rem; }
+    footer span { color: var(--cq-orange); }
+    a { color: var(--cq-orange); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header>
+      <div class="badge">Mosh · CQ Popup QA Agent</div>
+      <h1>Продолжить работу<br>на <span>ноутбуке</span></h1>
+      <p class="subtitle">Синхронизация через git. Пять шагов — и можно кодить дальше на любой машине.</p>
+    </header>
+
+    <!-- STEP 1 -->
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">1</div>
+        <div class="step-title">Клонировать репозиторий</div>
+      </div>
+      <p>Открой терминал в нужной папке и скачай проект с GitHub:</p>
+      <div class="code" data-copy="git clone https://github.com/alikin-lab/Mosh.git
+cd Mosh"><button class="copy-btn">копировать</button>git clone https://github.com/alikin-lab/Mosh.git
+cd Mosh</div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">2</div>
+        <div class="step-title">Создать файл <code>.env</code></div>
+      </div>
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <div><strong>Важно:</strong> файла <code>.env</code> в git нет — в нём токен доступа, и он намеренно не коммитится. На новой машине его нужно создать вручную.</div>
+      </div>
+      <p>Создай файл <code>.env</code> в корне проекта с таким содержимым:</p>
+      <div class="code" data-copy="CQ_AUTH_TOKEN=app.2782.687ba9bc168ca3274fe0a9ad2e3a2920035af5c055252e6d
+CQ_APP_ID=2782"><button class="copy-btn">копировать</button>CQ_AUTH_TOKEN=app.2782.687ba9bc168ca3274fe0a9ad2e3a2920035af5c055252e6d
+CQ_APP_ID=2782</div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">3</div>
+        <div class="step-title">Установить зависимости</div>
+      </div>
+      <p>Python-пакеты и браузер для Playwright:</p>
+      <div class="code" data-copy="pip install -r requirements.txt
+playwright install chromium"><button class="copy-btn">копировать</button>pip install -r requirements.txt
+playwright install chromium</div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">4</div>
+        <div class="step-title">Проверить запуск</div>
+      </div>
+      <p>Тестовый прогон на 60 секунд с видимым браузером:</p>
+      <div class="code" data-copy='python -m agent.test_runner --url https://bitrix.carrotquest.ru --duration 60 --no-headless --http-user carrotadmin --http-pass "128BV3xJ00GMuxS1pFFHuLAP"'><button class="copy-btn">копировать</button>python -m agent.test_runner --url https://bitrix.carrotquest.ru --duration 60 --no-headless --http-user carrotadmin --http-pass "128BV3xJ00GMuxS1pFFHuLAP"</div>
+      <div class="callout info">
+        <span class="ico">🔑</span>
+        <div>Пароль basic-auth передаётся прямо в команде и в git тоже не хранится. Держи его под рукой.</div>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">5</div>
+        <div class="step-title">Рабочий цикл между машинами</div>
+      </div>
+      <p>Чтобы изменения не терялись при переходе с компьютера на ноут и обратно:</p>
+      <div class="cycle">
+        <div class="col">
+          <h4>↓ Перед работой</h4>
+          <div class="code" data-copy="git pull"><button class="copy-btn">копировать</button>git pull</div>
+        </div>
+        <div class="col">
+          <h4>↑ После работы</h4>
+          <div class="code" data-copy='git add -A
+git commit -m "что сделал"
+git push'><button class="copy-btn">копировать</button>git add -A
+git commit -m "что сделал"
+git push</div>
+        </div>
+      </div>
+      <div class="callout ok">
+        <span class="ico">✅</span>
+        <div>Главное правило: <strong>pull в начале, push в конце</strong>. Тогда обе машины всегда в актуальном состоянии.</div>
+      </div>
+    </div>
+
+    <div class="divider">— Опционально, на потом —</div>
+
+    <!-- SERVER -->
+    <div class="step">
+      <div class="step-head">
+        <div class="step-num">🌍</div>
+        <div class="step-title">Сервер в Германии</div>
+      </div>
+      <p>Для самой разработки сервер не нужен — только git. Но он пригодится, когда захочешь:</p>
+      <div class="callout info">
+        <span class="ico">🌐</span>
+        <div><strong>Выложить презентацию</strong> по ссылке — чтобы команда и жюри открыли её в браузере без скачивания.</div>
+      </div>
+      <div class="callout info">
+        <span class="ico">🤖</span>
+        <div><strong>Гонять агента в фоне</strong> — Linux-сервер удобнее для headless-прогонов и запусков по расписанию.</div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Mosh · Хакатон <span>Carrot Quest</span> · 2026</p>
+      <p style="margin-top:.4rem"><a href="https://github.com/alikin-lab/Mosh">github.com/alikin-lab/Mosh</a></p>
+    </footer>
+
+  </div>
+
+  <script>
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const text = btn.parentElement.getAttribute('data-copy');
+        navigator.clipboard.writeText(text).then(() => {
+          const orig = btn.textContent;
+          btn.textContent = 'скопировано ✓';
+          btn.classList.add('done');
+          setTimeout(() => { btn.textContent = orig; btn.classList.remove('done'); }, 1600);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
