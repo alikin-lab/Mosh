@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mosh — Запуск в AntiGravity</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      padding: 40px 20px 80px;
+    }
+
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    header .badge {
+      display: inline-block;
+      background: #e8f0fe;
+      color: #1a73e8;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+      letter-spacing: 0.3px;
+    }
+
+    header h1 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 17px;
+      color: #6e6e73;
+    }
+
+    .repo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 18px;
+      background: #fff;
+      border: 1px solid #d2d2d7;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      color: #1d1d1f;
+      text-decoration: none;
+      font-family: "SF Mono", "Fira Code", monospace;
+      transition: box-shadow 0.15s;
+    }
+
+    .repo-link:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+    .step {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .step-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #1a73e8;
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step h2 {
+      font-size: 19px;
+      font-weight: 600;
+    }
+
+    .step p, .step li {
+      font-size: 15px;
+      line-height: 1.65;
+      color: #3a3a3c;
+    }
+
+    .step ul, .step ol {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+
+    .step li { margin-bottom: 6px; }
+
+    code {
+      background: #f2f2f7;
+      border-radius: 5px;
+      padding: 2px 6px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 13px;
+      color: #c0392b;
+    }
+
+    pre {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-radius: 10px;
+      padding: 18px 20px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 13.5px;
+      line-height: 1.7;
+      overflow-x: auto;
+      margin-top: 14px;
+    }
+
+    pre .comment { color: #6c7086; }
+    pre .key { color: #89b4fa; }
+    pre .val { color: #a6e3a1; }
+    pre .flag { color: #f38ba8; }
+    pre .cmd { color: #89dceb; }
+
+    .note {
+      background: #fff8e1;
+      border-left: 3px solid #f6c000;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      margin-top: 14px;
+      font-size: 14px;
+      color: #5a4a00;
+    }
+
+    .report-preview {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-radius: 10px;
+      padding: 20px 22px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      margin-top: 14px;
+    }
+
+    .report-preview .g { color: #a6e3a1; }
+    .report-preview .r { color: #f38ba8; }
+    .report-preview .y { color: #f9e2af; }
+    .report-preview .b { color: #89b4fa; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f2f2f7;
+      text-align: left;
+      padding: 10px 14px;
+      font-weight: 600;
+      color: #6e6e73;
+      border-bottom: 1px solid #e5e5ea;
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #f2f2f7;
+      color: #3a3a3c;
+      vertical-align: top;
+    }
+
+    td code { color: #c0392b; }
+
+    tr:last-child td { border-bottom: none; }
+
+    footer {
+      text-align: center;
+      margin-top: 48px;
+      font-size: 13px;
+      color: #aeaeb2;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="badge">AntiGravity · Gemini</div>
+    <h1>🚀 Запуск Mosh в AntiGravity</h1>
+    <p>Агент для тестирования попапов Carrot Quest</p>
+    <a class="repo-link" href="https://github.com/alikin-lab/Mosh" target="_blank">
+      ⬡ github.com/alikin-lab/Mosh
+    </a>
+  </header>
+
+  <!-- Step 1 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <h2>Открыть репозиторий в AntiGravity</h2>
+    </div>
+    <ol>
+      <li>Открыть AntiGravity</li>
+      <li>На стартовом экране нажать <strong>Clone Repository</strong></li>
+      <li>Вставить ссылку и нажать Enter:</li>
+    </ol>
+    <pre>https://github.com/alikin-lab/Mosh</pre>
+    <li style="margin-top:12px; font-size:15px; color:#3a3a3c; list-style:none">Дождаться завершения клонирования.</li>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">2</div>
+      <h2>Создать файл <code>.env</code> с токенами</h2>
+    </div>
+    <p>В корне проекта (рядом с <code>requirements.txt</code>) создать файл <code>.env</code> и вставить токены — получить у Евгения:</p>
+    <pre><span class="key">CQ_AUTH_TOKEN</span>=<span class="val">app.2782.xxxxxxxxxxxxxxxx</span>
+<span class="key">CQ_APP_ID</span>=<span class="val">2782</span></pre>
+    <div class="note">⚠️ Файл <code>.env</code> не хранится в git — создать вручную на каждой машине.</div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <h2>Установить зависимости</h2>
+    </div>
+    <p>Открыть терминал в AntiGravity и выполнить по очереди:</p>
+    <pre><span class="cmd">pip install</span> -r requirements.txt
+<span class="cmd">playwright install</span> chromium</pre>
+    <p style="margin-top:12px">Установка занимает ~1–2 минуты.</p>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">4</div>
+      <h2>Запустить тест</h2>
+    </div>
+    <p>Написать агенту в чат AntiGravity на русском:</p>
+    <pre>Запусти тест попапов на сайте https://bitrix.carrotquest.ru,
+легенда: потенциальный клиент хочет купить продукт,
+длительность 3 минуты</pre>
+    <p style="margin-top:14px">Или запустить вручную из терминала:</p>
+    <pre><span class="cmd">python -m agent.test_runner</span> \
+  <span class="flag">--url</span> https://bitrix.carrotquest.ru \
+  <span class="flag">--scenario</span> "Потенциальный клиент, хочет купить продукт" \
+  <span class="flag">--duration</span> 120</pre>
+  </div>
+
+  <!-- Step 5: Report -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">5</div>
+      <h2>Читать отчёт</h2>
+    </div>
+    <p>Через 2 минуты агент выведет отчёт в чат:</p>
+    <div class="report-preview">
+<span class="b">## 🔍 Отчёт тестирования попапов</span>
+
+Сайт: https://bitrix.carrotquest.ru
+Длительность: 120 сек
+ID пользователя CQ: `4829301`
+
+<span class="r">---
+## 🐛 Найдено багов: 2
+
+### 🔴 Баг 1: Наложение попапов [11:30:15]
+- Одновременно видны 2 попапа
+- Попапы: CQ Попап (конструктор), JS Попап
+
+### ⚠️ Баг 2: Быстрое повторное появление [11:30:45]
+- Интервал: 5.2 сек (порог: 60 сек)</span>
+
+<span class="y">---
+## 📋 Хронология событий
+
+| Время    | Событие                              |
+|----------|--------------------------------------|
+| 11:30:00 | Переход: https://bitrix.carrotquest.ru |
+| 11:30:10 | Появился: CQ Попап (конструктор)     |
+| 11:30:15 | Появился: JS Попап ⚠️ БАГ            |</span>
+
+<span class="g">---
+## 👤 Карточка пользователя
+
+🔗 Открыть карточку в Carrot Quest</span>
+    </div>
+  </div>
+
+  <!-- Troubleshooting -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num" style="background:#6e6e73">?</div>
+      <h2>Если что-то не работает</h2>
+    </div>
+    <table>
+      <tr>
+        <th>Проблема</th>
+        <th>Решение</th>
+      </tr>
+      <tr>
+        <td><code>ModuleNotFoundError: playwright</code></td>
+        <td>Повторить <code>pip install -r requirements.txt</code></td>
+      </tr>
+      <tr>
+        <td><code>Executable doesn't exist</code></td>
+        <td>Повторить <code>playwright install chromium</code></td>
+      </tr>
+      <tr>
+        <td><code>CQ_AUTH_TOKEN не задан</code></td>
+        <td>Проверить файл <code>.env</code> в корне проекта</td>
+      </tr>
+      <tr>
+        <td>Браузер не открывается визуально</td>
+        <td>Добавить флаг <code>--no-headless</code> в команду</td>
+      </tr>
+    </table>
+  </div>
+
+  <footer>Mosh · Carrot Quest QA Agent · Hackathon 2026</footer>
+
+</div>
+</body>
+</html>
