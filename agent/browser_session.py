@@ -15,8 +15,10 @@ class NavEntry:
 
 
 class BrowserSession:
-    def __init__(self, headless: bool = True):
+    def __init__(self, headless: bool = True, http_username: Optional[str] = None, http_password: Optional[str] = None):
         self.headless = headless
+        self.http_username = http_username
+        self.http_password = http_password
         self.page: Optional[Page] = None
         self.nav_log: list[NavEntry] = []
 
@@ -26,10 +28,13 @@ class BrowserSession:
     async def start(self, url: str):
         self._playwright = await async_playwright().start()
         self._browser = await self._playwright.chromium.launch(headless=self.headless)
-        context = await self._browser.new_context(
-            viewport={"width": 1280, "height": 800},
-            locale="ru-RU",
-        )
+        ctx_kwargs = {
+            "viewport": {"width": 1280, "height": 800},
+            "locale": "ru-RU",
+        }
+        if self.http_username and self.http_password:
+            ctx_kwargs["http_credentials"] = {"username": self.http_username, "password": self.http_password}
+        context = await self._browser.new_context(**ctx_kwargs)
         self.page = await context.new_page()
         await self.page.goto(url, wait_until="domcontentloaded", timeout=30_000)
         self._log("navigate", url)

@@ -13,7 +13,10 @@ Usage:
 import argparse
 import asyncio
 import os
+import sys
 import time
+
+sys.stdout.reconfigure(encoding="utf-8")
 
 from dotenv import load_dotenv
 
@@ -35,13 +38,16 @@ async def run_test(
     duration: int = 120,
     threshold: int = RAPID_SUCCESSION_THRESHOLD_SEC,
     headless: bool = True,
+    http_username: str | None = None,
+    http_password: str | None = None,
+    debug: bool = False,
 ) -> str:
-    session = BrowserSession(headless=headless)
+    session = BrowserSession(headless=headless, http_username=http_username, http_password=http_password)
     session_start = time.time()
 
     await session.start(url)
 
-    detector = PopupDetector(page=session.page, threshold=threshold)
+    detector = PopupDetector(page=session.page, threshold=threshold, debug=debug)
     monitor_task = asyncio.create_task(detector.start())
 
     # Give CQ widget time to load, then grab user ID
@@ -51,7 +57,7 @@ async def run_test(
     # Navigate extra URLs if provided
     if extra_urls:
         for extra_url in extra_urls:
-            await session.wait(8)
+            await session.wait(10)
             await session.navigate_to(extra_url)
             await session.scroll_page()
 
@@ -101,6 +107,9 @@ def main():
     parser.add_argument("--duration", type=int, default=120, help="Длительность сессии в секундах")
     parser.add_argument("--threshold", type=int, default=RAPID_SUCCESSION_THRESHOLD_SEC, help="Порог быстрого появления (сек)")
     parser.add_argument("--no-headless", action="store_true", help="Показать окно браузера")
+    parser.add_argument("--http-user", default=None, help="HTTP Basic Auth логин")
+    parser.add_argument("--http-pass", default=None, help="HTTP Basic Auth пароль")
+    parser.add_argument("--debug", action="store_true", help="Дебаг: дампить все popup-like элементы из всех фреймов")
     args = parser.parse_args()
 
     auth_token = os.getenv("CQ_AUTH_TOKEN")
@@ -119,6 +128,9 @@ def main():
         duration=args.duration,
         threshold=args.threshold,
         headless=not args.no_headless,
+        http_username=args.http_user,
+        http_password=args.http_pass,
+        debug=args.debug,
     ))
 
     print(report)

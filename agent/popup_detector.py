@@ -1,11 +1,11 @@
 import asyncio
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 from playwright.async_api import Page
 
-from .config import POPUP_SELECTORS, POPUP_LABELS, POLL_INTERVAL_SEC
+from .config import POPUP_SELECTORS, POPUP_LABELS, POLL_INTERVAL_SEC, DEBUG_SELECTORS
 
 
 @dataclass
@@ -13,6 +13,7 @@ class PopupEvent:
     timestamp: float
     event_type: str  # "appeared" | "closed"
     popup_type: str
+    frame_url: str = ""
 
     @property
     def label(self) -> str:
@@ -30,9 +31,10 @@ class Bug:
 
 
 class PopupDetector:
-    def __init__(self, page: Page, threshold: int):
+    def __init__(self, page: Page, threshold: int, debug: bool = False):
         self.page = page
         self.threshold = threshold
+        self.debug = debug
         self.events: list[PopupEvent] = []
         self.bugs: list[Bug] = []
 
@@ -42,20 +44,65 @@ class PopupDetector:
         self._running = False
 
     async def _get_visible_popups(self) -> set:
+        """Search for known popup selectors across ALL frames (main + iframes)."""
         visible = set()
-        for popup_type, selector in POPUP_SELECTORS.items():
+        frames = self.page.frames
+
+        for frame in frames:
             try:
-                elements = await self.page.query_selector_all(selector)
-                for el in elements:
-                    if await el.is_visible():
-                        visible.add(popup_type)
-                        break
+                for popup_type, selector in POPUP_SELECTORS.items():
+                    try:
+                        elements = await frame.query_selector_all(selector)
+                        for el in elements:
+                            if await el.is_visible():
+                                visible.add(popup_type)
+                                if self.debug:
+                                    print(f"[Detector] Found {popup_type!r} via '{selector}' in frame {frame.url!r}")
+                                break
+                    except Exception:
+                        pass
             except Exception:
                 pass
+
         return visible
+
+    async def _debug_scan(self):
+        """Dump all popup-like elements found across all frames (for selector discovery)."""
+        frames = self.page.frames
+        found_any = False
+        for frame in frames:
+            try:
+                for selector in DEBUG_SELECTORS:
+                    try:
+                        elements = await frame.query_selector_all(selector)
+                        for el in elements:
+                            try:
+                                tag = await el.evaluate("el => el.tagName")
+                                cls = await el.evaluate("el => el.className")
+                                attrs = await el.evaluate(
+                                    "el => Array.from(el.attributes).map(a => a.name + '=' + a.value).join(' ')"
+                                )
+                                visible = await el.is_visible()
+                                print(
+                                    f"[Debug] frame={frame.url!r} selector={selector!r} "
+                                    f"tag={tag} class={cls!r} attrs={attrs!r} visible={visible}"
+                                )
+                                found_any = True
+                            except Exception:
+                                pass
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+        if not found_any:
+            print("[Debug] No popup-like elements found in any frame this tick")
 
     async def _check(self):
         now = time.time()
+
+        if self.debug:
+            await self._debug_scan()
+
         current = await self._get_visible_popups()
 
         appeared = current - self._previous_popups
@@ -68,7 +115,6 @@ class PopupDetector:
         for popup_type in appeared:
             self.events.append(PopupEvent(now, "appeared", popup_type))
 
-            # Bug: rapid succession — popup appeared within threshold of any previous popup closing
             if self._last_any_close_time is not None:
                 interval = now - self._last_any_close_time
                 if interval < self.threshold:
@@ -85,9 +131,7 @@ class PopupDetector:
                         interval_seconds=interval,
                     ))
 
-            # Bug: overlap — new popup appeared while another is still visible
             if self._previous_popups:
-                # Debounce: don't report the same overlap within 5 sec
                 if self._last_overlap_bug_time is None or (now - self._last_overlap_bug_time) > 5:
                     screenshot = await self.page.screenshot()
                     all_popups = list(self._previous_popups) + [popup_type]

@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mosh — CQ Popup QA Agent</title>
+  <style>
+    /* ======================== RESET & BASE ======================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cq-orange: #FF6B35;
+      --cq-dark:   #1A1A2E;
+      --cq-mid:    #16213E;
+      --cq-accent: #0F3460;
+      --cq-light:  #E0E0E0;
+      --cq-white:  #FFFFFF;
+      --cq-green:  #4CAF50;
+      --cq-red:    #F44336;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--cq-dark);
+      color: var(--cq-light);
+      overflow-x: hidden;
+    }
+
+    /* ======================== NAV ======================== */
+    nav {
+      position: fixed; top: 0; width: 100%; z-index: 100;
+      background: rgba(26,26,46,0.92);
+      backdrop-filter: blur(12px);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid rgba(255,107,53,0.2);
+    }
+    .nav-logo { font-size: 1.4rem; font-weight: 700; color: var(--cq-orange); letter-spacing: 2px; }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { color: var(--cq-light); text-decoration: none; font-size: 0.9rem; transition: color .2s; }
+    .nav-links a:hover { color: var(--cq-orange); }
+
+    /* ======================== SECTIONS ======================== */
+    section { min-height: 100vh; padding: 8rem 2rem 4rem; display: flex; flex-direction: column; justify-content: center; }
+
+    .container { max-width: 1100px; margin: 0 auto; width: 100%; }
+
+    /* ======================== HERO ======================== */
+    #hero {
+      background: radial-gradient(ellipse at 60% 40%, rgba(255,107,53,0.15) 0%, transparent 60%),
+                  linear-gradient(135deg, var(--cq-dark) 0%, var(--cq-mid) 100%);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ---- Заяц-охотник за багами ---- */
+    .hunt-scene {
+      position: absolute;
+      left: 0; bottom: 48px;
+      width: 100%; height: 110px;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .hunt-ground {
+      position: absolute;
+      left: 0; bottom: 0; width: 100%; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,107,53,0.25) 20%, rgba(255,107,53,0.25) 80%, transparent);
+    }
+    .hunt-track {
+      position: absolute;
+      bottom: 0;
+      display: flex; align-items: flex-end;
+      animation: hunt-run 9s linear infinite;
+    }
+    @keyframes hunt-run {
+      0%   { transform: translateX(-220px); }
+      100% { transform: translateX(calc(100vw + 120px)); }
+    }
+
+    /* Заяц подпрыгивает */
+    .rabbit {
+      width: 96px; height: 96px;
+      transform-origin: bottom center;
+      animation: rabbit-hop .5s ease-in-out infinite;
+    }
+    @keyframes rabbit-hop {
+      0%, 100% { transform: translateY(0) scaleY(1); }
+      40%      { transform: translateY(-22px) scaleY(1.04); }
+      60%      { transform: translateY(-22px) scaleY(1.04); }
+    }
+    .rabbit-ear { transform-origin: 50% 90%; animation: ear-wiggle .5s ease-in-out infinite; }
+    @keyframes ear-wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      40%      { transform: rotate(-10deg); }
+    }
+    .rabbit-leg-f { transform-origin: top center; animation: leg-f .5s ease-in-out infinite; }
+    .rabbit-leg-b { transform-origin: top center; animation: leg-b .5s ease-in-out infinite; }
+    @keyframes leg-f { 0%,100%{transform:rotate(0)} 50%{transform:rotate(28deg)} }
+    @keyframes leg-b { 0%,100%{transform:rotate(0)} 50%{transform:rotate(-28deg)} }
+
+    /* Жучок-баг убегает впереди */
+    .bug-runner {
+      width: 38px; height: 38px;
+      align-self: flex-end;
+      margin: 0 0 6px 80px;
+      animation: bug-scuttle .18s ease-in-out infinite;
+    }
+    @keyframes bug-scuttle {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-4px); }
+    }
+    .bug-leg { transform-origin: top center; animation: bug-legs .12s ease-in-out infinite alternate; }
+    @keyframes bug-legs { from{transform:rotate(-14deg)} to{transform:rotate(14deg)} }
+
+    /* Пыль из-под лап */
+    .dust {
+      align-self: flex-end;
+      margin-bottom: 4px;
+      opacity: 0;
+      animation: dust-puff .5s ease-out infinite;
+    }
+    @keyframes dust-puff {
+      0%   { opacity: .5; transform: translateX(0) scale(.4); }
+      100% { opacity: 0;  transform: translateX(-26px) scale(1.1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hunt-track, .rabbit, .rabbit-ear, .rabbit-leg-f, .rabbit-leg-b,
+      .bug-runner, .bug-leg, .dust { animation: none; }
+    }
+    @media (max-width: 600px) {
+      .hunt-scene { transform: scale(.7); transform-origin: bottom left; }
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,107,53,0.15);
+      border: 1px solid rgba(255,107,53,0.4);
+      color: var(--cq-orange);
+      padding: .4rem 1.2rem;
+      border-radius: 999px;
+      font-size: .85rem;
+      letter-spacing: 1px;
+      margin-bottom: 2rem;
+      animation: fadeDown .6s ease both;
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      animation: fadeDown .8s ease .1s both;
+    }
+    h1 span { color: var(--cq-orange); }
+
+    .hero-sub {
+      font-size: 1.2rem;
+      color: #aaa;
+      max-width: 600px;
+      margin: 0 auto 3rem;
+      animation: fadeDown .8s ease .2s both;
+    }
+
+    .hero-cta {
+      display: inline-block;
+      background: var(--cq-orange);
+      color: #fff;
+      padding: .9rem 2.4rem;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform .2s, box-shadow .2s;
+      animation: fadeDown .8s ease .3s both;
+    }
+    .hero-cta:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(255,107,53,0.4); }
+
+    /* ======================== PROBLEM ======================== */
+    #problem { background: var(--cq-mid); }
+
+    .section-label {
+      font-size: .8rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--cq-orange);
+      margin-bottom: 1rem;
+    }
+    h2 { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1.5rem; }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 3rem; }
+
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: transform .2s, border-color .2s;
+    }
+    .card:hover { transform: translateY(-4px); border-color: rgba(255,107,53,0.4); }
+
+    .card-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .card h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: .6rem; }
+    .card p { color: #888; font-size: .95rem; line-height: 1.6; }
+
+    /* ======================== HOW IT WORKS ======================== */
+    #how { background: var(--cq-dark); }
+
+    .steps { display: flex; flex-direction: column; gap: 2rem; margin-top: 3rem; }
+    .step { display: flex; gap: 2rem; align-items: flex-start; }
+    .step-num {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: var(--cq-orange);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .step-body h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: .4rem; }
+    .step-body p { color: #888; font-size: .95rem; line-height: 1.6; }
+
+    /* ======================== DEMO / REPORT ======================== */
+    #demo { background: var(--cq-mid); }
+
+    .report-preview {
+      background: #0d1117;
+      border: 1px solid rgba(255,107,53,0.3);
+      border-radius: 12px;
+      padding: 2rem;
+      font-family: 'Courier New', monospace;
+      font-size: .9rem;
+      line-height: 1.8;
+      margin-top: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .report-preview::before {
+      content: '● ● ●';
+      display: block;
+      color: #555;
+      margin-bottom: 1rem;
+      font-size: .8rem;
+    }
+
+    .r-head { color: #7ec8e3; }
+    .r-ok   { color: var(--cq-green); }
+    .r-bug  { color: var(--cq-red); font-weight: 700; }
+    .r-warn { color: #ffb347; }
+    .r-dim  { color: #555; }
+
+    /* ======================== TEAM ======================== */
+    #team { background: var(--cq-dark); }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    .member {
+      text-align: center;
+      animation: fadeUp .6s ease both;
+    }
+    .member-photo {
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(255,107,53,0.5);
+      margin: 0 auto 1rem;
+      display: block;
+      background: rgba(255,107,53,0.1);
+    }
+    .member-photo-placeholder {
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,107,53,0.5);
+      margin: 0 auto 1rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem;
+      background: rgba(255,107,53,0.08);
+    }
+    .member h3 { font-size: 1rem; font-weight: 600; margin-bottom: .3rem; }
+    .member p  { color: #777; font-size: .85rem; }
+
+    /* ======================== FOOTER ======================== */
+    footer {
+      text-align: center;
+      padding: 3rem 2rem;
+      background: var(--cq-dark);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      color: #555;
+      font-size: .9rem;
+    }
+    footer span { color: var(--cq-orange); }
+
+    /* ======================== ANIMATIONS ======================== */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ======================== BUG BLINK ======================== */
+    @keyframes bugPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(244,67,54,0); }
+      50%       { box-shadow: 0 0 20px 6px rgba(244,67,54,0.4); }
+    }
+    .bug-card { animation: bugPulse 2s ease-in-out infinite; border-color: rgba(244,67,54,0.5) !important; }
+
+    /* ======================== TYPING CURSOR ======================== */
+    .cursor::after {
+      content: '|';
+      animation: blink 1s step-start infinite;
+      color: var(--cq-orange);
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">MOSH</div>
+    <ul class="nav-links">
+      <li><a href="#problem">Проблема</a></li>
+      <li><a href="#how">Как работает</a></li>
+      <li><a href="#demo">Демо</a></li>
+      <li><a href="#team">Команда</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="container">
+      <div class="hero-badge">Хакатон Carrot Quest · 2026</div>
+      <h1>Агент, который<br><span>находит баги</span><br>до клиента</h1>
+      <p class="hero-sub">
+        Mosh автоматически проверяет попапы на сайтах клиентов CQ —
+        и ловит наложения и быстрые повторения раньше, чем их увидит пользователь.
+      </p>
+      <a href="#problem" class="hero-cta">Узнать больше</a>
+    </div>
+
+    <!-- Заяц-охотник за багами -->
+    <div class="hunt-scene" aria-hidden="true">
+      <div class="hunt-ground"></div>
+      <div class="hunt-track">
+
+        <!-- ЗАЯЦ с морковкой -->
+        <svg class="rabbit" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- задняя лапа -->
+          <g class="rabbit-leg-b">
+            <ellipse cx="38" cy="94" rx="11" ry="7" fill="#d7d7e0"/>
+          </g>
+          <!-- хвост -->
+          <circle cx="26" cy="74" r="9" fill="#ffffff"/>
+          <!-- тело -->
+          <ellipse cx="58" cy="72" rx="34" ry="26" fill="#eaeaf2"/>
+          <!-- передняя лапа -->
+          <g class="rabbit-leg-f">
+            <ellipse cx="74" cy="96" rx="11" ry="7" fill="#d7d7e0"/>
+          </g>
+          <!-- голова -->
+          <circle cx="86" cy="54" r="20" fill="#f4f4fa"/>
+          <!-- уши -->
+          <g class="rabbit-ear">
+            <ellipse cx="82" cy="22" rx="6" ry="18" fill="#f4f4fa"/>
+            <ellipse cx="82" cy="24" rx="2.5" ry="12" fill="#ffb3c1"/>
+            <ellipse cx="94" cy="24" rx="6" ry="17" fill="#eaeaf2"/>
+            <ellipse cx="94" cy="26" rx="2.5" ry="11" fill="#ffb3c1"/>
+          </g>
+          <!-- глаз -->
+          <circle cx="94" cy="50" r="3.2" fill="#1a1a2e"/>
+          <circle cx="95.2" cy="49" r="1" fill="#fff"/>
+          <!-- нос -->
+          <circle cx="104" cy="56" r="2.6" fill="#ff6b9d"/>
+          <!-- усы -->
+          <line x1="104" y1="56" x2="116" y2="52" stroke="#cfcfdc" stroke-width="1"/>
+          <line x1="104" y1="58" x2="116" y2="60" stroke="#cfcfdc" stroke-width="1"/>
+          <!-- МОРКОВКА в лапах -->
+          <g transform="rotate(28 96 78)">
+            <path d="M96 70 L104 70 L100 96 Z" fill="#ff7a1a"/>
+            <path d="M97 75 L103 75 M98 81 L102 81 M99 87 L101 87" stroke="#e85d00" stroke-width="1"/>
+            <path d="M96 70 q-4 -8 1 -12 M100 69 q0 -9 5 -11 M104 70 q4 -7 9 -7" stroke="#4CAF50" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          </g>
+        </svg>
+
+        <!-- пыль -->
+        <svg class="dust" width="24" height="20" viewBox="0 0 24 20">
+          <circle cx="6" cy="14" r="4" fill="rgba(255,255,255,.25)"/>
+          <circle cx="14" cy="11" r="3" fill="rgba(255,255,255,.18)"/>
+        </svg>
+
+        <!-- ЖУЧОК-БАГ -->
+        <svg class="bug-runner" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- лапки -->
+          <g class="bug-leg" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round">
+            <line x1="20" y1="40" x2="8"  y2="48"/>
+            <line x1="30" y1="42" x2="30" y2="54"/>
+            <line x1="40" y1="40" x2="52" y2="48"/>
+            <line x1="20" y1="34" x2="6"  y2="34"/>
+            <line x1="40" y1="34" x2="54" y2="34"/>
+          </g>
+          <!-- тело -->
+          <ellipse cx="30" cy="34" rx="16" ry="14" fill="#F44336"/>
+          <!-- спинка -->
+          <path d="M30 20 L30 48" stroke="#a52714" stroke-width="2"/>
+          <circle cx="22" cy="32" r="2.2" fill="#1a1a2e"/>
+          <circle cx="38" cy="32" r="2.2" fill="#1a1a2e"/>
+          <!-- голова + усики -->
+          <circle cx="30" cy="18" r="7" fill="#c0392b"/>
+          <line x1="27" y1="13" x2="22" y2="6" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/>
+          <line x1="33" y1="13" x2="38" y2="6" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section id="problem">
+    <div class="container">
+      <p class="section-label reveal">Проблема</p>
+      <h2 class="reveal">Баги в попапах<br>портят UX клиентов</h2>
+      <p class="reveal" style="color:#888; max-width:600px; line-height:1.7;">
+        Команда внедрения Carrot Quest запускает маркетинговые сценарии
+        на сайтах клиентов — и только после жалоб узнаёт о визуальных конфликтах.
+      </p>
+      <div class="cards">
+        <div class="card bug-card reveal">
+          <div class="card-icon">⚠️</div>
+          <h3>Наложение попапов</h3>
+          <p>Два окна одновременно на экране — пользователь не знает, куда кликать.</p>
+        </div>
+        <div class="card reveal">
+          <div class="card-icon">⚡</div>
+          <h3>Слишком быстрое повторение</h3>
+          <p>Новый попап появляется через несколько секунд после закрытия предыдущего.</p>
+        </div>
+        <div class="card reveal">
+          <div class="card-icon">🔍</div>
+          <h3>Ручная проверка</h3>
+          <p>Раньше единственный способ поймать баг — вручную открыть сайт и ждать.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="container">
+      <p class="section-label reveal">Как работает</p>
+      <h2 class="reveal">Агент за 2 минуты<br>проверяет весь сайт</h2>
+      <div class="steps">
+        <div class="step reveal">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h3>Открывает сайт клиента</h3>
+            <p>Playwright запускает браузер и имитирует реального пользователя — переходит по страницам, скроллит.</p>
+          </div>
+        </div>
+        <div class="step reveal">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h3>Мониторит все попапы во всех iframe</h3>
+            <p>DOM-поллинг каждые 0.5 сек. Обходит все iframe CQ: carrot-popup-frame, carrot-messenger-tooltip.</p>
+          </div>
+        </div>
+        <div class="step reveal">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h3>Фиксирует баг + делает скриншот</h3>
+            <p>При обнаружении overlap или rapid succession — скриншот, метка времени, запись в лог.</p>
+          </div>
+        </div>
+        <div class="step reveal">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h3>Генерирует отчёт</h3>
+            <p>Markdown с хронологией событий, описанием бага и ссылкой на карточку пользователя в CQ.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMO -->
+  <section id="demo">
+    <div class="container">
+      <p class="section-label reveal">Результат</p>
+      <h2 class="reveal">Живой отчёт агента</h2>
+      <p class="reveal" style="color:#888;">Реальный прогон на <strong style="color:#fff">bitrix.carrotquest.ru</strong> — 29 мая 2026</p>
+      <div class="report-preview reveal">
+        <span class="r-head">## 🔍 Отчёт тестирования попапов</span><br><br>
+        <span class="r-dim">Сайт:     </span>https://bitrix.carrotquest.ru<br>
+        <span class="r-dim">Сценарий: </span>Потенциальный клиент изучает сайт<br>
+        <span class="r-dim">Дата:     </span>2026-05-29 17:55:26<br>
+        <span class="r-dim">User ID:  </span>2247738690539357647<br><br>
+        <span class="r-bug">## 🐛 Найдено багов: 1</span><br><br>
+        <span class="r-bug">### 🔴 Баг 1: Наложение попапов [17:55:40]</span><br>
+        <span class="r-warn">- Одновременно видны 2 попапа</span><br>
+        <span class="r-warn">- Нотификация / правый виджет + CQ Попап (конструктор)</span><br><br>
+        <span class="r-head">## 📋 Хронология событий</span><br><br>
+        <span class="r-dim">17:55:31</span>  Переход: https://bitrix.carrotquest.ru<br>
+        <span class="r-dim">17:55:39</span>  <span class="r-bug">Появился: Нотификация / правый виджет ⚠️</span><br>
+        <span class="r-dim">17:55:40</span>  <span class="r-bug">Появился: CQ Попап (конструктор) ⚠️</span><br><br>
+        <span class="r-head">## 👤 Карточка пользователя</span><br>
+        <span class="r-ok">🔗 Открыть карточку в Carrot Quest</span><span class="cursor"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEAM -->
+  <section id="team">
+    <div class="container">
+      <p class="section-label reveal">Команда</p>
+      <h2 class="reveal">Люди, которые<br>это сделали</h2>
+      <div class="team-grid" id="team-grid">
+
+        <div class="member">
+          <img class="member-photo" src="assets/photos/zhenya.png" alt="Женя Аликин" />
+          <h3>Женя Аликин</h3>
+        </div>
+
+        <div class="member">
+          <img class="member-photo" src="assets/photos/andrey.jpg" alt="Андрей Яков" />
+          <h3>Андрей Яков</h3>
+        </div>
+
+        <div class="member">
+          <img class="member-photo" src="assets/photos/alyona.png" alt="Алёна Киселева" />
+          <h3>Алёна Киселева</h3>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>Mosh · Хакатон <span>Carrot Quest</span> · 2 июня 2026</p>
+    <p style="margin-top:.5rem">Построен с Claude Code + Playwright + Python</p>
+  </footer>
+
+  <script>
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Stagger team cards
+    document.querySelectorAll('.member').forEach((el, i) => {
+      el.style.animationDelay = `${i * 0.1}s`;
+    });
+  </script>
+
+</body>
+</html>
