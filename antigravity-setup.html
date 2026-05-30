@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mosh — Установка агента в AntiGravity (с нуля)</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cq-orange:#FF6B35; --cq-dark:#1A1A2E; --cq-mid:#16213E; --cq-accent:#0F3460;
+      --cq-light:#E0E0E0; --cq-green:#4CAF50; --cq-red:#F44336; --cq-yellow:#ffb347;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family:'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, var(--cq-dark) 0%, var(--cq-mid) 100%);
+      color: var(--cq-light); min-height:100vh; padding: 3rem 1.5rem 5rem; line-height:1.6;
+    }
+    .wrap { max-width: 860px; margin: 0 auto; }
+
+    header { text-align:center; margin-bottom: 3rem; }
+    .badge { display:inline-block; background:rgba(255,107,53,.15); border:1px solid rgba(255,107,53,.4);
+      color:var(--cq-orange); padding:.4rem 1.2rem; border-radius:999px; font-size:.8rem; letter-spacing:1px; margin-bottom:1.5rem; }
+    h1 { font-size: clamp(1.9rem,5vw,2.9rem); font-weight:800; margin-bottom:.8rem; line-height:1.1; }
+    h1 span { color: var(--cq-orange); }
+    .subtitle { color:#9aa0ad; font-size:1.05rem; max-width:600px; margin:0 auto; }
+
+    .pre { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:1.4rem 1.6rem; margin-bottom:2.4rem; }
+    .pre h3 { font-size:.8rem; letter-spacing:2px; text-transform:uppercase; color:var(--cq-orange); margin-bottom:1rem; }
+    .pre ul { list-style:none; display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.7rem; }
+    .pre li { position:relative; padding-left:1.6rem; font-size:.95rem; color:#cfd3db; }
+    .pre li::before { content:'✓'; position:absolute; left:0; color:var(--cq-green); font-weight:700; }
+
+    .step { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:16px;
+      padding:1.8rem; margin-bottom:1.4rem; transition:border-color .2s; }
+    .step:hover { border-color:rgba(255,107,53,.35); }
+    .step-head { display:flex; align-items:center; gap:1rem; margin-bottom:1rem; }
+    .step-num { width:40px; height:40px; border-radius:50%; background:var(--cq-orange); color:#fff;
+      display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.05rem; flex-shrink:0; }
+    .step-title { font-size:1.15rem; font-weight:600; }
+    .step p { color:#9aa0ad; font-size:.95rem; margin-bottom:.7rem; }
+    .step a { color:var(--cq-orange); }
+    .step ul.plain { margin:.4rem 0 .6rem 1.2rem; color:#9aa0ad; font-size:.93rem; }
+    .step ul.plain li { margin-bottom:.3rem; }
+
+    .code { position:relative; background:#0d1117; border:1px solid rgba(255,255,255,.08); border-radius:10px;
+      padding:1rem 3.4rem 1rem 1rem; font-family:'Courier New',monospace; font-size:.88rem; color:#c9d1d9;
+      white-space:pre-wrap; word-break:break-word; margin-top:.5rem; }
+    .copy-btn { position:absolute; top:.6rem; right:.6rem; background:rgba(255,107,53,.15); border:1px solid rgba(255,107,53,.4);
+      color:var(--cq-orange); border-radius:6px; padding:.3rem .6rem; font-size:.74rem; cursor:pointer; transition:background .2s; }
+    .copy-btn:hover { background:rgba(255,107,53,.3); }
+    .copy-btn.done { color:var(--cq-green); border-color:var(--cq-green); background:rgba(76,175,80,.15); }
+
+    .callout { border-radius:12px; padding:1.1rem 1.3rem; margin:1rem 0; font-size:.92rem; display:flex; gap:.8rem; align-items:flex-start; }
+    .callout .ico { font-size:1.2rem; flex-shrink:0; }
+    .callout.warn { background:rgba(244,67,54,.1); border:1px solid rgba(244,67,54,.35); }
+    .callout.info { background:rgba(255,179,71,.08); border:1px solid rgba(255,179,71,.3); }
+    .callout.ok   { background:rgba(76,175,80,.08); border:1px solid rgba(76,175,80,.3); }
+    .callout strong { color:#fff; }
+    .callout code, .step code { background:rgba(255,255,255,.08); padding:.1rem .4rem; border-radius:4px; font-family:'Courier New',monospace; font-size:.88em; }
+
+    .divider { text-align:center; color:#555; margin:3rem 0 1.5rem; font-size:.8rem; letter-spacing:2px; text-transform:uppercase; }
+
+    /* preview of what happens */
+    .flow { display:flex; flex-direction:column; gap:.6rem; margin-top:.6rem; }
+    .flow .frow { display:flex; gap:.7rem; align-items:flex-start; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:.7rem .9rem; }
+    .flow .frow b { color:var(--cq-orange); }
+
+    footer { text-align:center; color:#555; font-size:.85rem; margin-top:3rem; }
+    footer a { color:var(--cq-orange); text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header>
+      <div class="badge">Mosh · CQ Popup QA Agent</div>
+      <h1>Установка агента<br>в <span>AntiGravity</span> с нуля</h1>
+      <p class="subtitle">Полный путь нового пользователя: от установки IDE до автономного прогона команды агентов.</p>
+    </header>
+
+    <div class="pre">
+      <h3>Что понадобится</h3>
+      <ul>
+        <li>Google-аккаунт (для AntiGravity)</li>
+        <li>Python 3.10+ и Git</li>
+        <li>CQ-токены клиента (Auth Token + App ID)</li>
+        <li>~15 минут</li>
+      </ul>
+    </div>
+
+    <!-- 1 -->
+    <div class="step">
+      <div class="step-head"><div class="step-num">1</div><div class="step-title">Установить AntiGravity</div></div>
+      <p>AntiGravity — агентная IDE от Google (форк VS Code с Gemini). Скачай и установи под свою ОС, войди через Google-аккаунт.</p>
+      <p>👉 <a href="https://antigravity.google/download">antigravity.google/download</a> · <span style="color:#777">Windows · macOS · Linux, бесплатно</span></p>
+    </div>
+
+    <!-- 2 -->
+    <div class="step">
+      <div class="step-head"><div class="step-num">2</div><div class="step-title">Поставить Python и Git (если ещё нет)</div></div>
+      <p>Проверь в терминале — если команды отвечают версией, всё уже есть:</p>
+      <div class="code" data-copy="python --version
+git --version"><button class="copy-btn">копировать</button>python --version
+git --version</div>
+      <p style="margin-top:.6rem">Если нет: <a href="https://www.python.org/downloads/">python.org/downloads</a> (отметь «Add to PATH»), <a href="https://git-scm.com/downloads">git-scm.com/downloads</a>.</p>
+    </div>
+
+    <!-- 3 -->
+    <div class="step">
+      <div class="step-head"><div class="step-num">3</div><div class="step-title">Склонировать репозиторий</div></div>
+      <p>В терминале (или через AntiGravity: <em>Clone Repository</em>) скачай проект:</p>
+      <div class="code" data-copy="git clone https://github.com/alikin-lab/Mosh.git
+cd Mosh"><button class="copy-btn">копировать</button>git clone https://github.com/alikin-lab/Mosh.git
+cd Mosh</div>
+    </div>
+
+    <!-- 4 -->
+    <div class="step">
+      <div class="step-head"><div class="step-num">4</div><div class="step-title">Открыть проект в AntiGravity</div></div>
+      <p>В AntiGravity: <strong>File → Open Folder</strong> → выбери папку <code>Mosh</code>. Открой встроенный терминал (<code>Ctrl/Cmd + `</code>) — все команды ниже выполняй в нём.</p>
+    </div>
+
+    <!-- 5 -->
+    <div class="step">
+      <div class="step-head"><div class="step-num">5</div><div class="step-title">Установить зависимости</div></div>
+      <p>Python-пакеты и браузер для Playwright:</p>
+      <div class="code" data-copy="pip install -r requirements.txt
+playwright install chromium"><button class="copy-btn">копировать</button>pip install -r requirements.txt
+playwright install chromium</div>
+    </div>
+
+    <!-- 6 -->
+    <div class="step">
+      <div class="step-head"><div class="step-num">6</div><div class="step-title">Создать файл <code>.env</code> с токенами CQ</div></div>
+      <div class="callout warn"><span class="ico">⚠️</span><div><strong>Токенов нет в репозитории</strong> — их нужно создать вручную. Где взять: дашборд Carrot Quest → <em>Настройки → Разработчикам / Интеграции → API</em>. Скопируй <code>Auth Token</code> (вид <code>app.APPID.xxx</code>) и <code>App ID</code>.</div></div>
+      <p>Создай файл <code>.env</code> в корне проекта:</p>
+      <div class="code" data-copy="CQ_AUTH_TOKEN=app.APPID.ВАШ_ТОКЕН
+CQ_APP_ID=APPID"><button class="copy-btn">копировать</button>CQ_AUTH_TOKEN=app.APPID.ВАШ_ТОКЕН
+CQ_APP_ID=APPID</div>
+      <div class="callout ok"><span class="ico">🔒</span><div>Файл <code>.env</code> в <code>.gitignore</code> — в git не попадёт. Шаблон лежит в <code>.env.example</code>.</div></div>
+    </div>
+
+    <!-- 7 -->
+    <div class="step">
+      <div class="step-head"><div class="step-num">7</div><div class="step-title">Настроить двух агентов в AntiGravity</div></div>
+      <p>Создай в AntiGravity двух агентов и вставь им системные промпты из репозитория:</p>
+      <ul class="plain">
+        <li>Агент <strong>«Продакт»</strong> → содержимое <code>agents/product_agent.md</code></li>
+        <li>Агент <strong>«Тестировщик»</strong> → содержимое <code>agents/tester_agent.md</code></li>
+      </ul>
+      <p>Описание автономного флоу и протокол обмена — в <code>agents/README.md</code>.</p>
+      <div class="callout info"><span class="ico">⚙️</span><div>Названия пунктов меню зависят от версии AntiGravity. Суть: каждому агенту задаётся его инструкция (системный промпт) = текст соответствующего <code>.md</code>.</div></div>
+    </div>
+
+    <!-- 8 -->
+    <div class="step">
+      <div class="step-head"><div class="step-num">8</div><div class="step-title">Включить автономный режим</div></div>
+      <p>Включи агентам авто-выполнение команд (auto-run / без подтверждения каждого шага). Тогда команда отработает сама — без бесконечных «да».</p>
+      <div class="callout info"><span class="ico">🤖</span><div>Это и есть смысл флоу: человек задаёт вводные <strong>один раз</strong>, дальше продакт и тестировщик работают автономно.</div></div>
+    </div>
+
+    <!-- 9 -->
+    <div class="step">
+      <div class="step-head"><div class="step-num">9</div><div class="step-title">Запустить — дать вводные продакту</div></div>
+      <p>Напиши агенту-продакту вводные о клиенте. Например:</p>
+      <div class="code" data-copy="Сайт клиента: https://bitrix.carrotquest.ru
+Воронка: главная → продукты → заявка/демо.
+Basic Auth: carrotadmin / <пароль> (если сайт под паролем)"><button class="copy-btn">копировать</button>Сайт клиента: https://bitrix.carrotquest.ru
+Воронка: главная → продукты → заявка/демо.
+Basic Auth: carrotadmin / &lt;пароль&gt; (если сайт под паролем)</div>
+      <p style="margin-top:.7rem">Дальше команда сама: продакт спроектирует сценарии → тестировщик прогонит → продакт сверит отчёт → ты получишь сводку.</p>
+      <div class="flow">
+        <div class="frow"><b>1.</b><div>Продакт пишет <code>scenarios/&lt;клиент&gt;.json</code></div></div>
+        <div class="frow"><b>2.</b><div>Тестировщик прогоняет каждый сценарий → <code>reports/&lt;id&gt;.json</code></div></div>
+        <div class="frow"><b>3.</b><div>Продакт ревьюит, при проблемах возвращает на доп. проверку</div></div>
+        <div class="frow"><b>4.</b><div>Сводка: <code>reports/&lt;клиент&gt;/SUMMARY.md</code> со ссылками на карточки</div></div>
+      </div>
+    </div>
+
+    <!-- 10 -->
+    <div class="step">
+      <div class="step-head"><div class="step-num">10</div><div class="step-title">Проверка вручную (необязательно)</div></div>
+      <p>Чтобы убедиться, что всё работает, можно прогнать один готовый сценарий напрямую:</p>
+      <div class="code" data-copy='python -m agent.test_runner --scenario-file scenarios/example.json --scenario-id chat-and-browse --json-out reports/test.json --no-headless'><button class="copy-btn">копировать</button>python -m agent.test_runner --scenario-file scenarios/example.json --scenario-id chat-and-browse --json-out reports/test.json --no-headless</div>
+      <p style="margin-top:.6rem">Сайт под паролем — добавь <code>--http-user ЛОГИН --http-pass "ПАРОЛЬ"</code>.</p>
+    </div>
+
+    <div class="divider">— Если что-то пошло не так —</div>
+
+    <div class="callout warn"><span class="ico">🕵️</span><div><strong>В отчёте <code>user_id: не определён</code> и нет попапов?</strong> Скорее всего запуск в headless — CQ-виджет не грузится. Гоняй с <code>--no-headless</code> (в Linux/AntiGravity — под виртуальным дисплеем <code>xvfb</code>).</div></div>
+    <div class="callout warn"><span class="ico">🔑</span><div><strong>Сайт открывается с ошибкой авторизации?</strong> Он под HTTP Basic Auth — передай <code>--http-user</code> и <code>--http-pass</code>.</div></div>
+    <div class="callout info"><span class="ico">🧩</span><div><strong>Попапы не находятся на новом сайте?</strong> Запусти с флагом <code>--debug</code> — он выгрузит все popup-подобные элементы из всех фреймов, чтобы найти реальные селекторы.</div></div>
+
+    <footer>
+      <p>Mosh · CQ Popup QA Agent · <a href="https://github.com/alikin-lab/Mosh">github.com/alikin-lab/Mosh</a></p>
+      <p style="margin-top:.4rem">Хакатон Carrot Quest · 2026</p>
+    </footer>
+
+  </div>
+
+  <script>
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const text = btn.parentElement.getAttribute('data-copy');
+        navigator.clipboard.writeText(text).then(() => {
+          const orig = btn.textContent;
+          btn.textContent = 'скопировано ✓'; btn.classList.add('done');
+          setTimeout(() => { btn.textContent = orig; btn.classList.remove('done'); }, 1600);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
