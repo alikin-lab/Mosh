@@ -1,0 +1,77 @@
+{
+  "site_url": "https://bitrix.carrotquest.ru",
+  "scenarios": [
+    {
+      "id": "linger-landing",
+      "title": "Залипание на лендинге + exit-intent",
+      "description": "Медленно изучает главную, скроллит и уводит мышь к закрытию вкладки",
+      "steps": [
+        {"action": "wait", "seconds": 12},
+        {"action": "scroll", "to": "0.5"},
+        {"action": "wait", "seconds": 12},
+        {"action": "exit_intent"},
+        {"action": "wait", "seconds": 8}
+      ]
+    },
+    {
+      "id": "chat-and-browse",
+      "title": "Открыть чат и листать сайт",
+      "description": "Открывает чат и продолжает изучать сайт — наложение нотификации бота и попапа",
+      "steps": [
+        {"action": "wait", "seconds": 6},
+        {"action": "open_chat"},
+        {"action": "wait", "seconds": 8},
+        {"action": "scroll", "to": "0.5"},
+        {"action": "wait", "seconds": 10}
+      ]
+    },
+    {
+      "id": "funnel-walk",
+      "title": "Быстрый проход по воронке",
+      "description": "Главная → продукты, быстрый просмотр ключевых страниц подряд",
+      "steps": [
+        {"action": "wait", "seconds": 5},
+        {"action": "navigate", "url": "https://bitrix.carrotquest.ru/products/"},
+        {"action": "wait", "seconds": 8},
+        {"action": "scroll", "to": "bottom"},
+        {"action": "wait", "seconds": 8}
+      ]
+    },
+    {
+      "id": "deep-scroll-products",
+      "title": "Глубокий скролл страницы продуктов",
+      "description": "Долго и глубоко скроллит продуктовую страницу — скролл + время",
+      "steps": [
+        {"action": "navigate", "url": "https://bitrix.carrotquest.ru/products/"},
+        {"action": "wait", "seconds": 8},
+        {"action": "scroll", "to": "bottom"},
+        {"action": "wait", "seconds": 10},
+        {"action": "scroll", "to": "top"},
+        {"action": "wait", "seconds": 8}
+      ]
+    },
+    {
+      "id": "exit-on-products",
+      "title": "Exit-intent на странице продуктов",
+      "description": "Заходит на продукты и уводит мышь — exit-попап против страничного попапа",
+      "steps": [
+        {"action": "navigate", "url": "https://bitrix.carrotquest.ru/products/"},
+        {"action": "wait", "seconds": 10},
+        {"action": "exit_intent"},
+        {"action": "wait", "seconds": 10}
+      ]
+    },
+    {
+      "id": "returning-quick",
+      "title": "Вернувшийся визитёр, быстрые переходы",
+      "description": "Быстро мечется главная→продукты→главная — ловит rapid_succession",
+      "steps": [
+        {"action": "wait", "seconds": 5},
+        {"action": "navigate", "url": "https://bitrix.carrotquest.ru/products/"},
+        {"action": "wait", "seconds": 6},
+        {"action": "navigate", "url": "https://bitrix.carrotquest.ru"},
+        {"action": "wait", "seconds": 12}
+      ]
+    }
+  ]
+}
