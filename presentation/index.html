@@ -180,6 +180,9 @@
     @keyframes bug-scuttle{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
     .bug-leg{transform-origin:top center;animation:bug-legs .12s ease-in-out infinite alternate}@keyframes bug-legs{from{transform:rotate(-14deg)}to{transform:rotate(14deg)}}
     .dust{align-self:flex-end;margin-bottom:4px;opacity:0;animation:dust-puff .5s ease-out infinite}@keyframes dust-puff{0%{opacity:.5;transform:translateX(0) scale(.4)}100%{opacity:0;transform:translateX(-26px) scale(1.1)}}
+    /* вариант «догоняет»: зазор почти нулевой, заяц вплотную настигает баг */
+    .hunt-scene.catch .bug-runner{margin-left:14px;animation-duration:.12s}
+    .hunt-scene.catch .rabbit{animation-duration:.38s}
     @media (prefers-reduced-motion: reduce){ .hunt-track,.rabbit,.rabbit-ear,.rabbit-leg-f,.rabbit-leg-b,.bug-runner,.bug-leg,.dust{animation:none} }
     @media (max-width:600px){ .hunt-scene{transform:scale(.7);transform-origin:bottom left} }
     @keyframes blink{50%{opacity:0}} .cursor::after{content:'|';animation:blink 1s step-start infinite;color:var(--cq-orange)}
@@ -611,6 +614,39 @@
         <div class="member"><img src="assets/photos/zhenya.png" alt="Женя Аликин"/><h3>Женя Аликин</h3></div>
         <div class="member"><img src="assets/photos/andrey.jpg" alt="Андрей Яков"/><h3>Андрей Яков</h3></div>
         <div class="member"><img src="assets/photos/alyona.png" alt="Алёна Киселева"/><h3>Алёна Киселева</h3></div>
+      </div>
+    </div>
+    <div class="hunt-scene catch" aria-hidden="true">
+      <div class="hunt-ground"></div>
+      <div class="hunt-track">
+        <svg class="rabbit" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g class="rabbit-leg-b"><ellipse cx="38" cy="94" rx="11" ry="7" fill="#d7d7e0"/></g>
+          <circle cx="26" cy="74" r="9" fill="#ffffff"/>
+          <ellipse cx="58" cy="72" rx="34" ry="26" fill="#eaeaf2"/>
+          <g class="rabbit-leg-f"><ellipse cx="74" cy="96" rx="11" ry="7" fill="#d7d7e0"/></g>
+          <circle cx="86" cy="54" r="20" fill="#f4f4fa"/>
+          <g class="rabbit-ear">
+            <ellipse cx="82" cy="22" rx="6" ry="18" fill="#f4f4fa"/><ellipse cx="82" cy="24" rx="2.5" ry="12" fill="#ffb3c1"/>
+            <ellipse cx="94" cy="24" rx="6" ry="17" fill="#eaeaf2"/><ellipse cx="94" cy="26" rx="2.5" ry="11" fill="#ffb3c1"/>
+          </g>
+          <circle cx="94" cy="50" r="3.2" fill="#1a1a2e"/><circle cx="95.2" cy="49" r="1" fill="#fff"/>
+          <circle cx="104" cy="56" r="2.6" fill="#ff6b9d"/>
+          <line x1="104" y1="56" x2="116" y2="52" stroke="#cfcfdc" stroke-width="1"/><line x1="104" y1="58" x2="116" y2="60" stroke="#cfcfdc" stroke-width="1"/>
+          <g transform="rotate(28 96 78)">
+            <path d="M96 70 L104 70 L100 96 Z" fill="#ff7a1a"/>
+            <path d="M97 75 L103 75 M98 81 L102 81 M99 87 L101 87" stroke="#e85d00" stroke-width="1"/>
+            <path d="M96 70 q-4 -8 1 -12 M100 69 q0 -9 5 -11 M104 70 q4 -7 9 -7" stroke="#4CAF50" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          </g>
+        </svg>
+        <svg class="dust" width="24" height="20" viewBox="0 0 24 20"><circle cx="6" cy="14" r="4" fill="rgba(255,255,255,.25)"/><circle cx="14" cy="11" r="3" fill="rgba(255,255,255,.18)"/></svg>
+        <svg class="bug-runner" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g class="bug-leg" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round">
+            <line x1="20" y1="40" x2="8" y2="48"/><line x1="30" y1="42" x2="30" y2="54"/><line x1="40" y1="40" x2="52" y2="48"/><line x1="20" y1="34" x2="6" y2="34"/><line x1="40" y1="34" x2="54" y2="34"/>
+          </g>
+          <ellipse cx="30" cy="34" rx="16" ry="14" fill="#F44336"/><path d="M30 20 L30 48" stroke="#a52714" stroke-width="2"/>
+          <circle cx="22" cy="32" r="2.2" fill="#1a1a2e"/><circle cx="38" cy="32" r="2.2" fill="#1a1a2e"/>
+          <circle cx="30" cy="18" r="7" fill="#c0392b"/><line x1="27" y1="13" x2="22" y2="6" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/><line x1="33" y1="13" x2="38" y2="6" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/>
+        </svg>
       </div>
     </div>
   </section>
