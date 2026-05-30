@@ -30,4 +30,4 @@ class CarrotQuestAPI:
         return resp.json()
 
     def user_card_url(self, user_id: str) -> str:
-        return f"https://app.carrotquest.io/apps/{self.app_id}/users/{user_id}"
+        return f"https://carrotquest.io/panel/{self.app_id}/users/{user_id}"
