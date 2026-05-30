@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mosh — CQ Popup QA Agent</title>
   <style>
-    /* ======================== RESET & BASE ======================== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -14,567 +13,540 @@
       --cq-mid:    #16213E;
       --cq-accent: #0F3460;
       --cq-light:  #E0E0E0;
-      --cq-white:  #FFFFFF;
       --cq-green:  #4CAF50;
       --cq-red:    #F44336;
+      --cq-yellow: #ffb347;
     }
 
-    html { scroll-behavior: smooth; }
-
+    html {
+      scroll-behavior: smooth;
+      scroll-snap-type: y mandatory;
+    }
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
       background: var(--cq-dark);
       color: var(--cq-light);
       overflow-x: hidden;
+      line-height: 1.5;
     }
 
-    /* ======================== NAV ======================== */
+    /* ===== NAV ===== */
     nav {
       position: fixed; top: 0; width: 100%; z-index: 100;
-      background: rgba(26,26,46,0.92);
-      backdrop-filter: blur(12px);
-      padding: 1rem 2rem;
-      display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid rgba(255,107,53,0.2);
+      background: rgba(26,26,46,0.78); backdrop-filter: blur(12px);
+      padding: .9rem 2rem; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid rgba(255,107,53,0.18);
     }
-    .nav-logo { font-size: 1.4rem; font-weight: 700; color: var(--cq-orange); letter-spacing: 2px; }
-    .nav-links { display: flex; gap: 2rem; list-style: none; }
-    .nav-links a { color: var(--cq-light); text-decoration: none; font-size: 0.9rem; transition: color .2s; }
-    .nav-links a:hover { color: var(--cq-orange); }
+    .nav-logo { font-size: 1.3rem; font-weight: 800; color: var(--cq-orange); letter-spacing: 2px; }
+    .nav-right { display: flex; gap: 1.4rem; align-items: center; }
+    .nav-right a { color: var(--cq-light); text-decoration: none; font-size: .9rem; transition: color .2s; }
+    .nav-right a:hover { color: var(--cq-orange); }
+    .nav-gh { border: 1px solid rgba(255,255,255,.3); border-radius: 999px; padding: .35rem 1rem; }
 
-    /* ======================== SECTIONS ======================== */
-    section { min-height: 100vh; padding: 8rem 2rem 4rem; display: flex; flex-direction: column; justify-content: center; }
+    /* ===== SLIDE SYSTEM ===== */
+    .slide {
+      min-height: 100vh; scroll-snap-align: start;
+      display: flex; align-items: center;
+      padding: 110px 2rem 70px; position: relative;
+    }
+    .slide:nth-child(even) { background: var(--cq-mid); }
+    .inner { max-width: 1120px; margin: 0 auto; width: 100%; }
 
-    .container { max-width: 1100px; margin: 0 auto; width: 100%; }
-
-    /* ======================== HERO ======================== */
-    #hero {
-      background: radial-gradient(ellipse at 60% 40%, rgba(255,107,53,0.15) 0%, transparent 60%),
-                  linear-gradient(135deg, var(--cq-dark) 0%, var(--cq-mid) 100%);
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* ---- Заяц-охотник за багами ---- */
-    .hunt-scene {
-      position: absolute;
-      left: 0; bottom: 48px;
-      width: 100%; height: 110px;
-      pointer-events: none;
-      z-index: 1;
-    }
-    .hunt-ground {
-      position: absolute;
-      left: 0; bottom: 0; width: 100%; height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,107,53,0.25) 20%, rgba(255,107,53,0.25) 80%, transparent);
-    }
-    .hunt-track {
-      position: absolute;
-      bottom: 0;
-      display: flex; align-items: flex-end;
-      animation: hunt-run 9s linear infinite;
-    }
-    @keyframes hunt-run {
-      0%   { transform: translateX(-220px); }
-      100% { transform: translateX(calc(100vw + 120px)); }
-    }
-
-    /* Заяц подпрыгивает */
-    .rabbit {
-      width: 96px; height: 96px;
-      transform-origin: bottom center;
-      animation: rabbit-hop .5s ease-in-out infinite;
-    }
-    @keyframes rabbit-hop {
-      0%, 100% { transform: translateY(0) scaleY(1); }
-      40%      { transform: translateY(-22px) scaleY(1.04); }
-      60%      { transform: translateY(-22px) scaleY(1.04); }
-    }
-    .rabbit-ear { transform-origin: 50% 90%; animation: ear-wiggle .5s ease-in-out infinite; }
-    @keyframes ear-wiggle {
-      0%, 100% { transform: rotate(0deg); }
-      40%      { transform: rotate(-10deg); }
-    }
-    .rabbit-leg-f { transform-origin: top center; animation: leg-f .5s ease-in-out infinite; }
-    .rabbit-leg-b { transform-origin: top center; animation: leg-b .5s ease-in-out infinite; }
-    @keyframes leg-f { 0%,100%{transform:rotate(0)} 50%{transform:rotate(28deg)} }
-    @keyframes leg-b { 0%,100%{transform:rotate(0)} 50%{transform:rotate(-28deg)} }
-
-    /* Жучок-баг убегает впереди */
-    .bug-runner {
-      width: 38px; height: 38px;
-      align-self: flex-end;
-      margin: 0 0 6px 80px;
-      animation: bug-scuttle .18s ease-in-out infinite;
-    }
-    @keyframes bug-scuttle {
-      0%, 100% { transform: translateY(0); }
-      50%      { transform: translateY(-4px); }
-    }
-    .bug-leg { transform-origin: top center; animation: bug-legs .12s ease-in-out infinite alternate; }
-    @keyframes bug-legs { from{transform:rotate(-14deg)} to{transform:rotate(14deg)} }
-
-    /* Пыль из-под лап */
-    .dust {
-      align-self: flex-end;
-      margin-bottom: 4px;
-      opacity: 0;
-      animation: dust-puff .5s ease-out infinite;
-    }
-    @keyframes dust-puff {
-      0%   { opacity: .5; transform: translateX(0) scale(.4); }
-      100% { opacity: 0;  transform: translateX(-26px) scale(1.1); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .hunt-track, .rabbit, .rabbit-ear, .rabbit-leg-f, .rabbit-leg-b,
-      .bug-runner, .bug-leg, .dust { animation: none; }
-    }
-    @media (max-width: 600px) {
-      .hunt-scene { transform: scale(.7); transform-origin: bottom left; }
-    }
-
-    .hero-badge {
-      display: inline-block;
-      background: rgba(255,107,53,0.15);
-      border: 1px solid rgba(255,107,53,0.4);
-      color: var(--cq-orange);
-      padding: .4rem 1.2rem;
-      border-radius: 999px;
-      font-size: .85rem;
-      letter-spacing: 1px;
-      margin-bottom: 2rem;
-      animation: fadeDown .6s ease both;
-    }
-
-    h1 {
-      font-size: clamp(2.5rem, 6vw, 5rem);
-      font-weight: 800;
-      line-height: 1.1;
-      margin-bottom: 1.5rem;
-      animation: fadeDown .8s ease .1s both;
-    }
+    .kicker { font-size: .78rem; letter-spacing: 3px; text-transform: uppercase; color: var(--cq-orange); margin-bottom: 1rem; font-weight: 600; }
+    h1 { font-size: clamp(2.4rem, 6vw, 4.8rem); font-weight: 800; line-height: 1.08; }
     h1 span { color: var(--cq-orange); }
+    h2 { font-size: clamp(1.7rem, 4vw, 3rem); font-weight: 800; line-height: 1.12; margin-bottom: 1.1rem; }
+    .sub { font-size: clamp(1rem, 1.6vw, 1.2rem); color: #9aa0ad; max-width: 620px; line-height: 1.6; }
 
-    .hero-sub {
-      font-size: 1.2rem;
-      color: #aaa;
-      max-width: 600px;
-      margin: 0 auto 3rem;
-      animation: fadeDown .8s ease .2s both;
-    }
+    /* split layout */
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 3.2rem; align-items: center; }
+    .split.narrow-left { grid-template-columns: 0.85fr 1.15fr; }
+    @media (max-width: 860px) { .split, .split.narrow-left { grid-template-columns: 1fr; gap: 2rem; } }
 
-    .hero-cta {
-      display: inline-block;
-      background: var(--cq-orange);
-      color: #fff;
-      padding: .9rem 2.4rem;
-      border-radius: 8px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: transform .2s, box-shadow .2s;
-      animation: fadeDown .8s ease .3s both;
-    }
-    .hero-cta:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(255,107,53,0.4); }
+    /* screenshot frame (window) */
+    .shot { border-radius: 14px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); background: #fff; }
+    .shot .bar { background: #e9e9ee; padding: 8px 12px; display: flex; gap: 6px; align-items: center; }
+    .shot .bar i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .shot .bar i:nth-child(1){background:#ff5f57}.shot .bar i:nth-child(2){background:#febc2e}.shot .bar i:nth-child(3){background:#28c840}
+    .shot img { display: block; width: 100%; }
+    .shot.plain { background: transparent; border: none; box-shadow: none; }
+    .shot.plain img { border-radius: 14px; }
+    .caption { font-size: .82rem; color: #777e8c; margin-top: .7rem; text-align: center; }
 
-    /* ======================== PROBLEM ======================== */
-    #problem { background: var(--cq-mid); }
-
-    .section-label {
-      font-size: .8rem;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--cq-orange);
-      margin-bottom: 1rem;
-    }
-    h2 { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1.5rem; }
-
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 3rem; }
-
-    .card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
-      padding: 2rem;
-      transition: transform .2s, border-color .2s;
-    }
+    /* generic cards */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; margin-top: 2.2rem; }
+    .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.6rem; transition: transform .2s, border-color .2s; }
     .card:hover { transform: translateY(-4px); border-color: rgba(255,107,53,0.4); }
+    .card .ic { font-size: 2rem; margin-bottom: .7rem; }
+    .card h3 { font-size: 1.05rem; margin-bottom: .4rem; }
+    .card p { color: #8b91a0; font-size: .92rem; }
 
-    .card-icon { font-size: 2.5rem; margin-bottom: 1rem; }
-    .card h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: .6rem; }
-    .card p { color: #888; font-size: .95rem; line-height: 1.6; }
+    /* diagram nodes/flow */
+    .flow { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap; }
+    .flow.center { justify-content: center; }
+    .nodebox { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 1rem 1.2rem; min-width: 130px; text-align: center; }
+    .nodebox .nt { font-size: .72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--cq-orange); margin-bottom: .35rem; }
+    .nodebox .nd { font-size: .95rem; color: #cfd3db; }
+    .arrow { color: var(--cq-orange); font-size: 1.6rem; line-height: 1; }
+    @media (max-width: 700px){ .flow{flex-direction:column} .arrow{transform:rotate(90deg)} }
 
-    /* ======================== HOW IT WORKS ======================== */
-    #how { background: var(--cq-dark); }
+    /* before / after */
+    .ba { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1.4rem; align-items: stretch; }
+    .ba .arrow { display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+    .ba-card { border-radius: 16px; padding: 1.6rem; }
+    .ba-card.was { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); }
+    .ba-card.now { background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.4); }
+    .ba-card h4 { font-size: .72rem; text-transform: uppercase; letter-spacing: 1.5px; color: #8b91a0; margin-bottom: .6rem; }
+    .ba-card.now h4 { color: var(--cq-orange); }
+    .ba-card .big { font-size: 1.3rem; font-weight: 700; margin-bottom: .4rem; }
+    .ba-card p { color: #9aa0ad; font-size: .9rem; }
+    @media (max-width: 700px){ .ba{grid-template-columns:1fr} .ba .arrow{transform:rotate(90deg)} }
 
-    .steps { display: flex; flex-direction: column; gap: 2rem; margin-top: 3rem; }
-    .step { display: flex; gap: 2rem; align-items: flex-start; }
-    .step-num {
-      width: 48px; height: 48px; border-radius: 50%;
-      background: var(--cq-orange);
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 1.1rem; flex-shrink: 0;
-    }
-    .step-body h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: .4rem; }
-    .step-body p { color: #888; font-size: .95rem; line-height: 1.6; }
+    /* metric */
+    .metrics2 { display: flex; gap: 2.5rem; align-items: center; flex-wrap: wrap; }
+    .ring { text-align: center; }
+    .ring .num { font-size: clamp(3rem, 7vw, 5rem); font-weight: 800; line-height: 1; }
+    .ring .num.dim { color: #6f7686; }
+    .ring .num.hot { color: var(--cq-orange); }
+    .ring .lbl { color: #9aa0ad; font-size: .9rem; margin-top: .5rem; max-width: 180px; }
 
-    /* ======================== DEMO / REPORT ======================== */
-    #demo { background: var(--cq-mid); }
+    /* chips */
+    .chips { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.4rem; }
+    .chip { font-size: .9rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: .5rem 1rem; }
+    .chip.hot { border-color: rgba(255,107,53,.5); color: var(--cq-orange); }
 
-    .report-preview {
-      background: #0d1117;
-      border: 1px solid rgba(255,107,53,0.3);
-      border-radius: 12px;
-      padding: 2rem;
-      font-family: 'Courier New', monospace;
-      font-size: .9rem;
-      line-height: 1.8;
-      margin-top: 2rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .report-preview::before {
-      content: '● ● ●';
-      display: block;
-      color: #555;
-      margin-bottom: 1rem;
-      font-size: .8rem;
-    }
+    /* terminal report */
+    .report { background: #0d1117; border: 1px solid rgba(255,107,53,0.3); border-radius: 12px; padding: 1.6rem; font-family: 'Courier New', monospace; font-size: .86rem; line-height: 1.75; box-shadow: 0 24px 60px rgba(0,0,0,.5); }
+    .report::before { content: '● ● ●'; display:block; color:#555; margin-bottom:.8rem; font-size:.7rem; }
+    .r-head{color:#7ec8e3}.r-ok{color:var(--cq-green)}.r-bug{color:var(--cq-red);font-weight:700}.r-warn{color:var(--cq-yellow)}.r-dim{color:#555}
 
-    .r-head { color: #7ec8e3; }
-    .r-ok   { color: var(--cq-green); }
-    .r-bug  { color: var(--cq-red); font-weight: 700; }
-    .r-warn { color: #ffb347; }
-    .r-dim  { color: #555; }
+    /* mini timeline (send signal) */
+    .sendlog { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 1.2rem 1.4rem; font-family: 'Courier New', monospace; font-size: .9rem; }
+    .sendlog .row { display: flex; justify-content: space-between; padding: .35rem 0; border-bottom: 1px dashed rgba(255,255,255,.08); }
+    .sendlog .row:last-child{border:none}
+    .sendlog .t { color: var(--cq-orange); }
+    .sendlog .flag { color: var(--cq-red); font-size: .8rem; margin-top:.6rem; display:block; }
 
-    /* ======================== TEAM ======================== */
-    #team { background: var(--cq-dark); }
+    /* iframe nesting diagram */
+    .frameA { border: 2px dashed rgba(255,255,255,.25); border-radius: 14px; padding: 1.2rem; }
+    .frameA .lab { font-size: .72rem; color: #8b91a0; letter-spacing: 1px; text-transform: uppercase; margin-bottom: .8rem; }
+    .frameB { border: 2px dashed rgba(255,107,53,.5); border-radius: 12px; padding: 1rem; margin-bottom: .8rem; background: rgba(255,107,53,.05); }
+    .frameB .lab { color: var(--cq-orange); }
+    .frameB .pop { background: rgba(255,255,255,.08); border-radius: 8px; padding: .6rem .9rem; font-size: .85rem; }
 
-    .team-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 2rem;
-      margin-top: 3rem;
-    }
+    /* team */
+    .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 2.4rem; max-width: 640px; }
+    @media (max-width:600px){ .team-grid{grid-template-columns:1fr} }
+    .member { text-align: center; }
+    .member img { width: 116px; height: 116px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,107,53,0.5); margin: 0 auto .9rem; display: block; }
+    .member h3 { font-size: 1rem; }
 
-    .member {
-      text-align: center;
-      animation: fadeUp .6s ease both;
-    }
-    .member-photo {
-      width: 120px; height: 120px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 3px solid rgba(255,107,53,0.5);
-      margin: 0 auto 1rem;
-      display: block;
-      background: rgba(255,107,53,0.1);
-    }
-    .member-photo-placeholder {
-      width: 120px; height: 120px;
-      border-radius: 50%;
-      border: 3px solid rgba(255,107,53,0.5);
-      margin: 0 auto 1rem;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2.5rem;
-      background: rgba(255,107,53,0.08);
-    }
-    .member h3 { font-size: 1rem; font-weight: 600; margin-bottom: .3rem; }
-    .member p  { color: #777; font-size: .85rem; }
+    /* footer slide */
+    .foot-cta { text-align: center; }
+    .btn { display: inline-block; background: var(--cq-orange); color: #fff; padding: .9rem 2.2rem; border-radius: 8px; font-weight: 600; text-decoration: none; transition: transform .2s, box-shadow .2s; }
+    .btn:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(255,107,53,.4); }
 
-    /* ======================== FOOTER ======================== */
-    footer {
-      text-align: center;
-      padding: 3rem 2rem;
-      background: var(--cq-dark);
-      border-top: 1px solid rgba(255,255,255,0.06);
-      color: #555;
-      font-size: .9rem;
-    }
-    footer span { color: var(--cq-orange); }
+    /* dots nav */
+    .dots { position: fixed; right: 22px; top: 50%; transform: translateY(-50%); z-index: 90; display: flex; flex-direction: column; gap: 12px; }
+    .dots a { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.22); transition: all .25s; display: block; }
+    .dots a:hover { background: rgba(255,255,255,0.5); }
+    .dots a.active { background: var(--cq-orange); transform: scale(1.35); }
+    @media (max-width: 760px){ .dots{display:none} }
 
-    /* ======================== ANIMATIONS ======================== */
-    @keyframes fadeDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+    /* scroll hint */
+    .scroll-hint { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); color: #8b91a0; font-size: .8rem; letter-spacing: 1px; animation: bob 1.8s ease-in-out infinite; z-index:2; }
+    @keyframes bob { 0%,100%{transform:translate(-50%,0)} 50%{transform:translate(-50%,8px)} }
 
-    .reveal {
-      opacity: 0;
-      transform: translateY(30px);
-      transition: opacity .6s ease, transform .6s ease;
-    }
-    .reveal.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    /* reveal */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce){ html{scroll-snap-type:none} .reveal{opacity:1;transform:none} }
 
-    /* ======================== BUG BLINK ======================== */
-    @keyframes bugPulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(244,67,54,0); }
-      50%       { box-shadow: 0 0 20px 6px rgba(244,67,54,0.4); }
-    }
-    .bug-card { animation: bugPulse 2s ease-in-out infinite; border-color: rgba(244,67,54,0.5) !important; }
-
-    /* ======================== TYPING CURSOR ======================== */
-    .cursor::after {
-      content: '|';
-      animation: blink 1s step-start infinite;
-      color: var(--cq-orange);
-    }
-    @keyframes blink { 50% { opacity: 0; } }
+    /* ===== HERO (rabbit) ===== */
+    #hero { background: radial-gradient(ellipse at 60% 38%, rgba(255,107,53,0.16) 0%, transparent 60%), linear-gradient(135deg, var(--cq-dark) 0%, var(--cq-mid) 100%); text-align: center; overflow: hidden; }
+    .hero-badge { display:inline-block; background:rgba(255,107,53,0.15); border:1px solid rgba(255,107,53,0.4); color:var(--cq-orange); padding:.4rem 1.2rem; border-radius:999px; font-size:.85rem; letter-spacing:1px; margin-bottom:1.8rem; }
+    .hero-sub { font-size:1.2rem; color:#aaa; max-width:600px; margin:1.3rem auto 0; }
+    .hunt-scene { position:absolute; left:0; bottom:70px; width:100%; height:110px; pointer-events:none; z-index:1; }
+    .hunt-ground { position:absolute; left:0; bottom:0; width:100%; height:1px; background:linear-gradient(90deg, transparent, rgba(255,107,53,0.25) 20%, rgba(255,107,53,0.25) 80%, transparent); }
+    .hunt-track { position:absolute; bottom:0; display:flex; align-items:flex-end; animation:hunt-run 9s linear infinite; }
+    @keyframes hunt-run { 0%{transform:translateX(-220px)} 100%{transform:translateX(calc(100vw + 120px))} }
+    .rabbit { width:96px; height:96px; transform-origin:bottom center; animation:rabbit-hop .5s ease-in-out infinite; }
+    @keyframes rabbit-hop { 0%,100%{transform:translateY(0) scaleY(1)} 40%{transform:translateY(-22px) scaleY(1.04)} 60%{transform:translateY(-22px) scaleY(1.04)} }
+    .rabbit-ear { transform-origin:50% 90%; animation:ear-wiggle .5s ease-in-out infinite; }
+    @keyframes ear-wiggle { 0%,100%{transform:rotate(0)} 40%{transform:rotate(-10deg)} }
+    .rabbit-leg-f{transform-origin:top center;animation:leg-f .5s ease-in-out infinite}.rabbit-leg-b{transform-origin:top center;animation:leg-b .5s ease-in-out infinite}
+    @keyframes leg-f{0%,100%{transform:rotate(0)}50%{transform:rotate(28deg)}}@keyframes leg-b{0%,100%{transform:rotate(0)}50%{transform:rotate(-28deg)}}
+    .bug-runner{width:38px;height:38px;align-self:flex-end;margin:0 0 6px 80px;animation:bug-scuttle .18s ease-in-out infinite}
+    @keyframes bug-scuttle{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    .bug-leg{transform-origin:top center;animation:bug-legs .12s ease-in-out infinite alternate}@keyframes bug-legs{from{transform:rotate(-14deg)}to{transform:rotate(14deg)}}
+    .dust{align-self:flex-end;margin-bottom:4px;opacity:0;animation:dust-puff .5s ease-out infinite}@keyframes dust-puff{0%{opacity:.5;transform:translateX(0) scale(.4)}100%{opacity:0;transform:translateX(-26px) scale(1.1)}}
+    @media (prefers-reduced-motion: reduce){ .hunt-track,.rabbit,.rabbit-ear,.rabbit-leg-f,.rabbit-leg-b,.bug-runner,.bug-leg,.dust{animation:none} }
+    @media (max-width:600px){ .hunt-scene{transform:scale(.7);transform-origin:bottom left} }
+    @keyframes blink{50%{opacity:0}} .cursor::after{content:'|';animation:blink 1s step-start infinite;color:var(--cq-orange)}
   </style>
 </head>
 <body>
 
-  <!-- NAV -->
   <nav>
     <div class="nav-logo">MOSH</div>
-    <ul class="nav-links">
-      <li><a href="#problem">Проблема</a></li>
-      <li><a href="#how">Как работает</a></li>
-      <li><a href="#demo">Демо</a></li>
-      <li><a href="#team">Команда</a></li>
-    </ul>
+    <div class="nav-right">
+      <a href="#problem">Проблема</a>
+      <a href="#signal">Решение</a>
+      <a href="#team">Команда</a>
+      <a class="nav-gh" href="https://github.com/alikin-lab/Mosh">GitHub</a>
+    </div>
   </nav>
 
-  <!-- HERO -->
-  <section id="hero">
-    <div class="container">
+  <!-- dots filled by JS -->
+  <div class="dots" id="dots"></div>
+
+  <!-- 01 HERO -->
+  <section class="slide" id="hero" data-dot="Старт">
+    <div class="inner">
       <div class="hero-badge">Хакатон Carrot Quest · 2026</div>
       <h1>Агент, который<br><span>находит баги</span><br>до клиента</h1>
-      <p class="hero-sub">
-        Mosh автоматически проверяет попапы на сайтах клиентов CQ —
-        и ловит наложения и быстрые повторения раньше, чем их увидит пользователь.
-      </p>
-      <a href="#problem" class="hero-cta">Узнать больше</a>
-      <a href="story.html" style="display:inline-block;margin-left:14px;color:#fff;opacity:.85;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.4);padding-bottom:2px;font-weight:500;">История проекта →</a>
+      <p class="hero-sub">История Mosh — от скрипта в терминале до автономной команды агентов с двумя сигналами детекции попапов.</p>
     </div>
-
-    <!-- Заяц-охотник за багами -->
     <div class="hunt-scene" aria-hidden="true">
       <div class="hunt-ground"></div>
       <div class="hunt-track">
-
-        <!-- ЗАЯЦ с морковкой -->
         <svg class="rabbit" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- задняя лапа -->
-          <g class="rabbit-leg-b">
-            <ellipse cx="38" cy="94" rx="11" ry="7" fill="#d7d7e0"/>
-          </g>
-          <!-- хвост -->
+          <g class="rabbit-leg-b"><ellipse cx="38" cy="94" rx="11" ry="7" fill="#d7d7e0"/></g>
           <circle cx="26" cy="74" r="9" fill="#ffffff"/>
-          <!-- тело -->
           <ellipse cx="58" cy="72" rx="34" ry="26" fill="#eaeaf2"/>
-          <!-- передняя лапа -->
-          <g class="rabbit-leg-f">
-            <ellipse cx="74" cy="96" rx="11" ry="7" fill="#d7d7e0"/>
-          </g>
-          <!-- голова -->
+          <g class="rabbit-leg-f"><ellipse cx="74" cy="96" rx="11" ry="7" fill="#d7d7e0"/></g>
           <circle cx="86" cy="54" r="20" fill="#f4f4fa"/>
-          <!-- уши -->
           <g class="rabbit-ear">
-            <ellipse cx="82" cy="22" rx="6" ry="18" fill="#f4f4fa"/>
-            <ellipse cx="82" cy="24" rx="2.5" ry="12" fill="#ffb3c1"/>
-            <ellipse cx="94" cy="24" rx="6" ry="17" fill="#eaeaf2"/>
-            <ellipse cx="94" cy="26" rx="2.5" ry="11" fill="#ffb3c1"/>
+            <ellipse cx="82" cy="22" rx="6" ry="18" fill="#f4f4fa"/><ellipse cx="82" cy="24" rx="2.5" ry="12" fill="#ffb3c1"/>
+            <ellipse cx="94" cy="24" rx="6" ry="17" fill="#eaeaf2"/><ellipse cx="94" cy="26" rx="2.5" ry="11" fill="#ffb3c1"/>
           </g>
-          <!-- глаз -->
-          <circle cx="94" cy="50" r="3.2" fill="#1a1a2e"/>
-          <circle cx="95.2" cy="49" r="1" fill="#fff"/>
-          <!-- нос -->
+          <circle cx="94" cy="50" r="3.2" fill="#1a1a2e"/><circle cx="95.2" cy="49" r="1" fill="#fff"/>
           <circle cx="104" cy="56" r="2.6" fill="#ff6b9d"/>
-          <!-- усы -->
-          <line x1="104" y1="56" x2="116" y2="52" stroke="#cfcfdc" stroke-width="1"/>
-          <line x1="104" y1="58" x2="116" y2="60" stroke="#cfcfdc" stroke-width="1"/>
-          <!-- МОРКОВКА в лапах -->
+          <line x1="104" y1="56" x2="116" y2="52" stroke="#cfcfdc" stroke-width="1"/><line x1="104" y1="58" x2="116" y2="60" stroke="#cfcfdc" stroke-width="1"/>
           <g transform="rotate(28 96 78)">
             <path d="M96 70 L104 70 L100 96 Z" fill="#ff7a1a"/>
             <path d="M97 75 L103 75 M98 81 L102 81 M99 87 L101 87" stroke="#e85d00" stroke-width="1"/>
             <path d="M96 70 q-4 -8 1 -12 M100 69 q0 -9 5 -11 M104 70 q4 -7 9 -7" stroke="#4CAF50" stroke-width="2.5" fill="none" stroke-linecap="round"/>
           </g>
         </svg>
-
-        <!-- пыль -->
-        <svg class="dust" width="24" height="20" viewBox="0 0 24 20">
-          <circle cx="6" cy="14" r="4" fill="rgba(255,255,255,.25)"/>
-          <circle cx="14" cy="11" r="3" fill="rgba(255,255,255,.18)"/>
-        </svg>
-
-        <!-- ЖУЧОК-БАГ -->
+        <svg class="dust" width="24" height="20" viewBox="0 0 24 20"><circle cx="6" cy="14" r="4" fill="rgba(255,255,255,.25)"/><circle cx="14" cy="11" r="3" fill="rgba(255,255,255,.18)"/></svg>
         <svg class="bug-runner" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- лапки -->
           <g class="bug-leg" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round">
-            <line x1="20" y1="40" x2="8"  y2="48"/>
-            <line x1="30" y1="42" x2="30" y2="54"/>
-            <line x1="40" y1="40" x2="52" y2="48"/>
-            <line x1="20" y1="34" x2="6"  y2="34"/>
-            <line x1="40" y1="34" x2="54" y2="34"/>
+            <line x1="20" y1="40" x2="8" y2="48"/><line x1="30" y1="42" x2="30" y2="54"/><line x1="40" y1="40" x2="52" y2="48"/><line x1="20" y1="34" x2="6" y2="34"/><line x1="40" y1="34" x2="54" y2="34"/>
           </g>
-          <!-- тело -->
-          <ellipse cx="30" cy="34" rx="16" ry="14" fill="#F44336"/>
-          <!-- спинка -->
-          <path d="M30 20 L30 48" stroke="#a52714" stroke-width="2"/>
-          <circle cx="22" cy="32" r="2.2" fill="#1a1a2e"/>
-          <circle cx="38" cy="32" r="2.2" fill="#1a1a2e"/>
-          <!-- голова + усики -->
-          <circle cx="30" cy="18" r="7" fill="#c0392b"/>
-          <line x1="27" y1="13" x2="22" y2="6" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/>
-          <line x1="33" y1="13" x2="38" y2="6" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/>
+          <ellipse cx="30" cy="34" rx="16" ry="14" fill="#F44336"/><path d="M30 20 L30 48" stroke="#a52714" stroke-width="2"/>
+          <circle cx="22" cy="32" r="2.2" fill="#1a1a2e"/><circle cx="38" cy="32" r="2.2" fill="#1a1a2e"/>
+          <circle cx="30" cy="18" r="7" fill="#c0392b"/><line x1="27" y1="13" x2="22" y2="6" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/><line x1="33" y1="13" x2="38" y2="6" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/>
         </svg>
+      </div>
+    </div>
+    <div class="scroll-hint">ЛИСТАЙТЕ ↓</div>
+  </section>
 
+  <!-- 02 МЕХАНИКИ -->
+  <section class="slide" id="mechanics" data-dot="Контекст">
+    <div class="inner">
+      <div class="split">
+        <div class="reveal">
+          <p class="kicker">Контекст</p>
+          <h2>Сайты клиентов CQ<br>говорят механиками</h2>
+          <p class="sub">Carrot Quest запускает на сайтах клиентов попапы, чат-ботов и нотификации. Все они срабатывают по триггерам — и иногда конфликтуют между собой.</p>
+          <div class="chips">
+            <span class="chip hot">Поп-апы</span>
+            <span class="chip hot">Чат-боты</span>
+            <span class="chip hot">Нотификации</span>
+            <span class="chip">Email · Web Push</span>
+          </div>
+        </div>
+        <div class="reveal">
+          <div class="shot"><div class="bar"><i></i><i></i><i></i></div><img src="assets/cq/cq_bot_builder.png" alt="Конструктор лид-бота Carrot Quest" loading="lazy"/></div>
+          <p class="caption">Конструктор лид-бота в Carrot Quest</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- PROBLEM -->
-  <section id="problem">
-    <div class="container">
-      <p class="section-label reveal">Проблема</p>
-      <h2 class="reveal">Баги в попапах<br>портят UX клиентов</h2>
-      <p class="reveal" style="color:#888; max-width:600px; line-height:1.7;">
-        Команда внедрения Carrot Quest запускает маркетинговые сценарии
-        на сайтах клиентов — и только после жалоб узнаёт о визуальных конфликтах.
-      </p>
+  <!-- 03 ПРОБЛЕМА -->
+  <section class="slide" id="problem" data-dot="Проблема">
+    <div class="inner">
+      <div class="split narrow-left">
+        <div class="reveal">
+          <p class="kicker">Проблема</p>
+          <h2>Попапы налезают<br>друг на друга</h2>
+          <p class="sub">Два окна одновременно на экране или попап, который выскакивает снова через секунды после закрытия. Пользователь не знает, куда кликать — и закрывает сайт.</p>
+          <div class="chips">
+            <span class="chip hot">Наложение</span>
+            <span class="chip hot">Быстрое повторение</span>
+          </div>
+        </div>
+        <div class="reveal">
+          <div class="shot plain"><img src="assets/cq/cq_popups_ab.png" alt="Два попапа одновременно" loading="lazy"/></div>
+          <p class="caption">Два попапа на одном экране — типичный баг наложения</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 ЦЕНА -->
+  <section class="slide" id="cost" data-dot="Цена">
+    <div class="inner" style="text-align:center">
+      <p class="kicker reveal">Почему это дорого</p>
+      <h2 class="reveal">О баге узнают <span style="color:var(--cq-red)">после жалобы</span></h2>
+      <p class="sub reveal" style="margin:0 auto 2.6rem">Когда баг уже увидел живой пользователь. Раньше единственный способ поймать его — открыть сайт руками и ждать.</p>
+      <div class="flow center reveal">
+        <div class="nodebox"><div class="nt">Шаг 1</div><div class="nd">🙍 Пользователь<br>видит баг</div></div>
+        <span class="arrow">→</span>
+        <div class="nodebox"><div class="nt">Шаг 2</div><div class="nd">😕 Раздражение,<br>уходит с сайта</div></div>
+        <span class="arrow">→</span>
+        <div class="nodebox"><div class="nt">Шаг 3</div><div class="nd">📩 Жалоба<br>клиента</div></div>
+        <span class="arrow">→</span>
+        <div class="nodebox" style="border-color:rgba(244,67,54,.5)"><div class="nt" style="color:var(--cq-red)">Шаг 4</div><div class="nd">📉 Доверие<br>к продукту падает</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 V1 -->
+  <section class="slide" id="v1" data-dot="V1">
+    <div class="inner">
+      <p class="kicker reveal">Первая гипотеза · V1</p>
+      <h2 class="reveal">Один агент в терминале</h2>
+      <p class="sub reveal">Python + Playwright. Даёшь текстовый сценарий — агент открывает сайт, ходит по страницам, каждые полсекунды смотрит DOM и ловит наложения. Отчёт — в чат.</p>
+      <div class="flow center reveal" style="margin-top:2.6rem">
+        <div class="nodebox"><div class="nt">Вход</div><div class="nd">📝 Сценарий<br>текстом</div></div>
+        <span class="arrow">→</span>
+        <div class="nodebox"><div class="nt">Playwright</div><div class="nd">🌐 Открывает<br>сайт</div></div>
+        <span class="arrow">→</span>
+        <div class="nodebox"><div class="nt">Детектор</div><div class="nd">👁 DOM-поллинг<br>каждые 0.5с</div></div>
+        <span class="arrow">→</span>
+        <div class="nodebox"><div class="nt">Выход</div><div class="nd">📄 Отчёт<br>о багах</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 РЕАЛЬНОСТЬ -->
+  <section class="slide" id="reality" data-dot="Поворот 1">
+    <div class="inner">
+      <p class="kicker reveal">Встреча с реальностью</p>
+      <h2 class="reveal">«Багов нет» — а баг был</h2>
+      <p class="sub reveal" style="margin-bottom:2.2rem">Первый прогон на боевом сайте. Отчёт чистый. Но в карточке пользователя — два отправленных попапа. Агент честно смотрел не туда.</p>
+      <div class="split">
+        <div class="reveal">
+          <div class="report">
+            <span class="r-head">## Отчёт тестирования попапов</span><br>
+            <span class="r-dim">Сайт: bitrix.carrotquest.ru</span><br><br>
+            <span class="r-ok">## ✅ Багов не обнаружено</span><br><br>
+            <span class="r-dim"># ...но это было неправдой</span>
+          </div>
+          <p class="caption">Что говорил агент</p>
+        </div>
+        <div class="reveal">
+          <div class="shot"><div class="bar"><i></i><i></i><i></i></div><img src="assets/cq/cq_user_card.png" alt="Карточка пользователя CQ с событиями попапов" loading="lazy"/></div>
+          <p class="caption">Что было на самом деле — карточка пользователя CQ</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 ПОЧЕМУ -->
+  <section class="slide" id="why" data-dot="Почему">
+    <div class="inner">
+      <div class="split">
+        <div class="reveal">
+          <p class="kicker">Разбор промаха</p>
+          <h2>Попапы прятались<br>в iframe</h2>
+          <p class="sub">Агент искал только в главном фрейме. А попапы CQ живут внутри вложенных iframe — и селекторы из примеров не совпадали с реальной вёрсткой.</p>
+          <div class="chips">
+            <span class="chip">❌ Только главный фрейм</span>
+            <span class="chip">❌ Неверные селекторы</span>
+            <span class="chip">❌ Headless без виджета</span>
+          </div>
+        </div>
+        <div class="reveal">
+          <div class="frameA">
+            <div class="lab">Главная страница (DOM)</div>
+            <div class="frameB">
+              <div class="lab">iframe · carrot-popup-frame</div>
+              <div class="pop">🪟 .popup-block-container</div>
+            </div>
+            <div class="frameB">
+              <div class="lab">iframe · carrot-messenger-tooltip</div>
+              <div class="pop">🔔 .cq-wrapper</div>
+            </div>
+            <div style="font-size:.82rem;color:#8b91a0;margin-top:.4rem">↑ сюда агент сначала не заглядывал</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 ЧИНИМ -->
+  <section class="slide" id="fix" data-dot="Первый баг">
+    <div class="inner">
+      <p class="kicker reveal">Учим агента видеть</p>
+      <h2 class="reveal">Обход всех фреймов — и первый пойманный баг</h2>
+      <p class="sub reveal" style="margin-bottom:2rem">Режим <code>--debug</code> выгрузил реальную структуру и дал верные селекторы. И мы поймали настоящее наложение.</p>
+      <div class="reveal" style="max-width:760px">
+        <div class="report">
+          <span class="r-bug">## 🐛 Найдено багов: 1</span><br>
+          <span class="r-bug">### Наложение попапов [17:55:40]</span><br>
+          <span class="r-warn">- Одновременно видны 2 попапа</span><br><br>
+          <span class="r-head">## Хронология</span><br>
+          <span class="r-dim">17:55:39</span> <span class="r-bug">Появился: правый виджет ⚠️</span><br>
+          <span class="r-dim">17:55:40</span> <span class="r-bug">Появился: попап-конструктор ⚠️</span><span class="cursor"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 ПОВОРОТ 2 -->
+  <section class="slide" id="shift" data-dot="Поворот 2">
+    <div class="inner">
+      <p class="kicker reveal">Поворот архитектуры</p>
+      <h2 class="reveal">От одного агента — к команде</h2>
+      <p class="sub reveal" style="margin-bottom:2.4rem">Агент, которому каждый раз пишут сценарий руками, не масштабируется. Мы переосмыслили систему как команду агентов.</p>
+      <div class="ba reveal">
+        <div class="ba-card was">
+          <h4>Было</h4>
+          <div class="big">Один агент</div>
+          <p>Сценарий пишется руками. Каждый прогон — ручной запуск и контроль.</p>
+        </div>
+        <div class="arrow">→</div>
+        <div class="ba-card now">
+          <h4>Стало</h4>
+          <div class="big">Продакт + Тестировщик</div>
+          <p>Продакт проектирует сценарии и ревьюит отчёт, тестировщик прогоняет. Автономно.</p>
+        </div>
+      </div>
+      <p class="reveal" style="margin-top:1.6rem;color:#9aa0ad">Принцип — <strong style="color:var(--cq-light)">«мозги в агентах, руки в коде»</strong>: творческое за LLM, измерения за детерминированным Python.</p>
+    </div>
+  </section>
+
+  <!-- 10 ФЛОУ КОМАНДЫ -->
+  <section class="slide" id="flow" data-dot="Флоу">
+    <div class="inner" style="text-align:center">
+      <p class="kicker reveal">Как работает команда</p>
+      <h2 class="reveal">Человек задаёт вводные — один раз</h2>
+      <p class="sub reveal" style="margin:0 auto 2.6rem">Дальше продакт и тестировщик общаются через файлы, без ручных подтверждений.</p>
+      <div class="flow center reveal">
+        <div class="nodebox"><div class="nt">Человек</div><div class="nd">🌐 URL +<br>воронка</div></div>
+        <span class="arrow">→</span>
+        <div class="nodebox" style="border-color:rgba(255,107,53,.4)"><div class="nt">Продакт</div><div class="nd">🧠 scenarios<br>.json</div></div>
+        <span class="arrow">→</span>
+        <div class="nodebox"><div class="nt">Тестировщик</div><div class="nd">🤖 прогон +<br>reports.json</div></div>
+        <span class="arrow">→</span>
+        <div class="nodebox" style="border-color:rgba(255,107,53,.4)"><div class="nt">Продакт</div><div class="nd">🔍 ревью<br>отчёта</div></div>
+        <span class="arrow">→</span>
+        <div class="nodebox"><div class="nt">Итог</div><div class="nd">📊 сводка<br>человеку</div></div>
+      </div>
+      <p class="reveal" style="margin-top:1.8rem;color:#8b91a0;font-size:.9rem">↩ Если в отчёте проблемы — продакт возвращает сценарии на доп. проверку</p>
+    </div>
+  </section>
+
+  <!-- 11 ОСИ ТРИГГЕРОВ -->
+  <section class="slide" id="coverage" data-dot="Покрытие">
+    <div class="inner">
+      <div class="split">
+        <div class="reveal">
+          <p class="kicker">Сколько тестов</p>
+          <h2>Не число,<br>а покрытие триггеров</h2>
+          <p class="sub">Баги рождаются на пересечении условий запуска. Поэтому 8 продуманных сценариев бьют 20 случайных. Набор адаптивен: база 6–8, +1 на шаг воронки.</p>
+          <div class="chips">
+            <span class="chip hot">Страница</span><span class="chip hot">Время</span>
+            <span class="chip hot">Скролл</span><span class="chip hot">Exit-intent</span>
+            <span class="chip hot">Событие</span><span class="chip hot">Тип визитёра</span>
+          </div>
+        </div>
+        <div class="reveal">
+          <div class="shot"><div class="bar"><i></i><i></i><i></i></div><img src="assets/cq/cq_triggers.png" alt="Настройка триггеров отправки в CQ" loading="lazy"/></div>
+          <p class="caption">Реальные триггеры отправки в Carrot Quest</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 ВТОРОЙ СИГНАЛ -->
+  <section class="slide" id="signal" data-dot="Решение">
+    <div class="inner">
+      <p class="kicker reveal">Главное открытие</p>
+      <h2 class="reveal">Второй сигнал: что отправила платформа</h2>
+      <p class="sub reveal" style="margin-bottom:2.2rem">Кроме DOM, есть данные карточки CQ — когда и какой попап реально отправлен. Этот сигнал оказался надёжнее: ловит баг даже когда попап мелькнул быстрее, чем успел заметить экран.</p>
+      <div class="split">
+        <div class="reveal">
+          <div class="metrics2">
+            <div class="ring"><div class="num dim">4/6</div><div class="lbl">поймал DOM-детектор</div></div>
+            <span class="arrow" style="font-size:2rem">→</span>
+            <div class="ring"><div class="num hot">6/6</div><div class="lbl">поймали тайминги отправки (API)</div></div>
+          </div>
+        </div>
+        <div class="reveal">
+          <div class="sendlog">
+            <div class="row"><span>📨 Поп-ап хакатон JS</span><span class="t">13:49:52</span></div>
+            <div class="row"><span>📨 Попап Хакатон</span><span class="t">13:49:53</span></div>
+            <span class="flag">⚠️ два попапа отправлены с разницей в 1 секунду — наложение на уровне доставки</span>
+          </div>
+          <p class="caption">Данные из карточки пользователя CQ</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 ИТОГ -->
+  <section class="slide" id="outcome" data-dot="Итог">
+    <div class="inner">
+      <p class="kicker reveal">К чему пришли</p>
+      <h2 class="reveal">Mosh сегодня</h2>
       <div class="cards">
-        <div class="card bug-card reveal">
-          <div class="card-icon">⚠️</div>
-          <h3>Наложение попапов</h3>
-          <p>Два окна одновременно на экране — пользователь не знает, куда кликать.</p>
-        </div>
-        <div class="card reveal">
-          <div class="card-icon">⚡</div>
-          <h3>Слишком быстрое повторение</h3>
-          <p>Новый попап появляется через несколько секунд после закрытия предыдущего.</p>
-        </div>
-        <div class="card reveal">
-          <div class="card-icon">🔍</div>
-          <h3>Ручная проверка</h3>
-          <p>Раньше единственный способ поймать баг — вручную открыть сайт и ждать.</p>
-        </div>
+        <div class="card reveal"><div class="ic">🤖</div><h3>Автономная команда</h3><p>Человек задаёт сайт и воронку — дальше агенты работают сами.</p></div>
+        <div class="card reveal"><div class="ic">📡</div><h3>Два сигнала</h3><p>DOM + данные CQ API. Вместе они не дают багу проскользнуть.</p></div>
+        <div class="card reveal"><div class="ic">🎯</div><h3>Адаптивные сценарии</h3><p>Покрывают оси триггеров под воронку клиента, а не набивают число.</p></div>
+        <div class="card reveal"><div class="ic">📊</div><h3>Сводный отчёт</h3><p>Тайминги, попапы и ссылки на карточки. Четыре типа багов.</p></div>
+      </div>
+      <p class="reveal" style="margin-top:2.2rem;font-size:1.15rem;color:var(--cq-light);text-align:center">От «обойди сайт и посмотри» — к команде, которая находит проблему <span style="color:var(--cq-orange)">раньше клиента</span>.</p>
+    </div>
+  </section>
+
+  <!-- 14 КОМАНДА -->
+  <section class="slide" id="team" data-dot="Команда">
+    <div class="inner" style="text-align:center">
+      <p class="kicker reveal">Команда</p>
+      <h2 class="reveal">Те, кто это собрал</h2>
+      <div class="team-grid reveal" style="margin-left:auto;margin-right:auto">
+        <div class="member"><img src="assets/photos/zhenya.png" alt="Женя Аликин"/><h3>Женя Аликин</h3></div>
+        <div class="member"><img src="assets/photos/andrey.jpg" alt="Андрей Яков"/><h3>Андрей Яков</h3></div>
+        <div class="member"><img src="assets/photos/alyona.png" alt="Алёна Киселева"/><h3>Алёна Киселева</h3></div>
       </div>
     </div>
   </section>
 
-  <!-- HOW IT WORKS -->
-  <section id="how">
-    <div class="container">
-      <p class="section-label reveal">Как работает</p>
-      <h2 class="reveal">Агент за 2 минуты<br>проверяет весь сайт</h2>
-      <div class="steps">
-        <div class="step reveal">
-          <div class="step-num">1</div>
-          <div class="step-body">
-            <h3>Открывает сайт клиента</h3>
-            <p>Playwright запускает браузер и имитирует реального пользователя — переходит по страницам, скроллит.</p>
-          </div>
-        </div>
-        <div class="step reveal">
-          <div class="step-num">2</div>
-          <div class="step-body">
-            <h3>Мониторит все попапы во всех iframe</h3>
-            <p>DOM-поллинг каждые 0.5 сек. Обходит все iframe CQ: carrot-popup-frame, carrot-messenger-tooltip.</p>
-          </div>
-        </div>
-        <div class="step reveal">
-          <div class="step-num">3</div>
-          <div class="step-body">
-            <h3>Фиксирует баг + делает скриншот</h3>
-            <p>При обнаружении overlap или rapid succession — скриншот, метка времени, запись в лог.</p>
-          </div>
-        </div>
-        <div class="step reveal">
-          <div class="step-num">4</div>
-          <div class="step-body">
-            <h3>Генерирует отчёт</h3>
-            <p>Markdown с хронологией событий, описанием бага и ссылкой на карточку пользователя в CQ.</p>
-          </div>
-        </div>
-      </div>
+  <!-- 15 FOOTER -->
+  <section class="slide" id="end" data-dot="Финал" style="text-align:center">
+    <div class="inner foot-cta">
+      <div class="nav-logo reveal" style="font-size:2rem;margin-bottom:1rem">MOSH</div>
+      <h2 class="reveal">Находим баги раньше клиента</h2>
+      <p class="sub reveal" style="margin:0 auto 2rem">CQ Popup QA Agent · Хакатон Carrot Quest · 2026</p>
+      <a class="btn reveal" href="https://github.com/alikin-lab/Mosh">Открыть на GitHub →</a>
+      <p class="reveal" style="margin-top:2.4rem;color:#555;font-size:.85rem">Построен с Claude Code · Playwright · Python</p>
     </div>
   </section>
-
-  <!-- DEMO -->
-  <section id="demo">
-    <div class="container">
-      <p class="section-label reveal">Результат</p>
-      <h2 class="reveal">Живой отчёт агента</h2>
-      <p class="reveal" style="color:#888;">Реальный прогон на <strong style="color:#fff">bitrix.carrotquest.ru</strong> — 29 мая 2026</p>
-      <div class="report-preview reveal">
-        <span class="r-head">## 🔍 Отчёт тестирования попапов</span><br><br>
-        <span class="r-dim">Сайт:     </span>https://bitrix.carrotquest.ru<br>
-        <span class="r-dim">Сценарий: </span>Потенциальный клиент изучает сайт<br>
-        <span class="r-dim">Дата:     </span>2026-05-29 17:55:26<br>
-        <span class="r-dim">User ID:  </span>2247738690539357647<br><br>
-        <span class="r-bug">## 🐛 Найдено багов: 1</span><br><br>
-        <span class="r-bug">### 🔴 Баг 1: Наложение попапов [17:55:40]</span><br>
-        <span class="r-warn">- Одновременно видны 2 попапа</span><br>
-        <span class="r-warn">- Нотификация / правый виджет + CQ Попап (конструктор)</span><br><br>
-        <span class="r-head">## 📋 Хронология событий</span><br><br>
-        <span class="r-dim">17:55:31</span>  Переход: https://bitrix.carrotquest.ru<br>
-        <span class="r-dim">17:55:39</span>  <span class="r-bug">Появился: Нотификация / правый виджет ⚠️</span><br>
-        <span class="r-dim">17:55:40</span>  <span class="r-bug">Появился: CQ Попап (конструктор) ⚠️</span><br><br>
-        <span class="r-head">## 👤 Карточка пользователя</span><br>
-        <span class="r-ok">🔗 Открыть карточку в Carrot Quest</span><span class="cursor"></span>
-      </div>
-    </div>
-  </section>
-
-  <!-- TEAM -->
-  <section id="team">
-    <div class="container">
-      <p class="section-label reveal">Команда</p>
-      <h2 class="reveal">Люди, которые<br>это сделали</h2>
-      <div class="team-grid" id="team-grid">
-
-        <div class="member">
-          <img class="member-photo" src="assets/photos/zhenya.png" alt="Женя Аликин" />
-          <h3>Женя Аликин</h3>
-        </div>
-
-        <div class="member">
-          <img class="member-photo" src="assets/photos/andrey.jpg" alt="Андрей Яков" />
-          <h3>Андрей Яков</h3>
-        </div>
-
-        <div class="member">
-          <img class="member-photo" src="assets/photos/alyona.png" alt="Алёна Киселева" />
-          <h3>Алёна Киселева</h3>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <p>Mosh · Хакатон <span>Carrot Quest</span> · 2 июня 2026</p>
-    <p style="margin-top:.5rem">Построен с Claude Code + Playwright + Python</p>
-  </footer>
 
   <script>
-    // Scroll reveal
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          observer.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.15 });
+    // reveal
+    const ro = new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');ro.unobserve(e.target);}})},{threshold:.12});
+    document.querySelectorAll('.reveal').forEach(el=>ro.observe(el));
 
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-    // Stagger team cards
-    document.querySelectorAll('.member').forEach((el, i) => {
-      el.style.animationDelay = `${i * 0.1}s`;
+    // dots
+    const slides = [...document.querySelectorAll('.slide')];
+    const dots = document.getElementById('dots');
+    slides.forEach((s,i)=>{
+      const a = document.createElement('a');
+      a.href = '#'+s.id; a.title = s.dataset.dot || ('Слайд '+(i+1));
+      dots.appendChild(a);
     });
+    const dotEls = [...dots.children];
+    const da = new IntersectionObserver((es)=>{
+      es.forEach(e=>{ if(e.isIntersecting){ const i = slides.indexOf(e.target); dotEls.forEach((d,j)=>d.classList.toggle('active', j===i)); } });
+    },{threshold:.5});
+    slides.forEach(s=>da.observe(s));
   </script>
-
 </body>
 </html>
