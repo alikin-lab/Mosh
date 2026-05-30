@@ -54,10 +54,6 @@ async def run_test(
     detector = PopupDetector(page=session.page, threshold=threshold, debug=debug)
     monitor_task = asyncio.create_task(detector.start())
 
-    # Give CQ widget time to load, then grab user ID
-    await session.wait(3)
-    user_id = await session.get_cq_user_id()
-
     if scenario_obj is not None:
         # Исполняем шаги сценария
         await execute_scenario(session, scenario_obj)
@@ -79,7 +75,11 @@ async def run_test(
     detector.stop()
     monitor_task.cancel()
 
-    # Fetch CQ API data
+    # Забираем CQ user ID в конце — к этому моменту виджет точно инициализирован
+    user_id = await session.get_cq_user_id(timeout_sec=15)
+
+    # Дать событиям долететь до сервера CQ, затем запросить API
+    await asyncio.sleep(4)
     api = CarrotQuestAPI(auth_token=auth_token, app_id=app_id)
     api_events: list[dict] = []
     card_url = None

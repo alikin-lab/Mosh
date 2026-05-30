@@ -4,8 +4,6 @@ from typing import Optional
 
 from playwright.async_api import async_playwright, Page, Browser, Playwright
 
-from .config import CQ_INIT_WAIT_SEC
-
 
 @dataclass
 class NavEntry:
@@ -39,16 +37,21 @@ class BrowserSession:
         await self.page.goto(url, wait_until="domcontentloaded", timeout=30_000)
         self._log("navigate", url)
 
-    async def get_cq_user_id(self) -> Optional[str]:
-        # Wait for CQ widget to initialize
-        await self.page.wait_for_timeout(int(CQ_INIT_WAIT_SEC * 1000))
-        try:
-            user_id = await self.page.evaluate(
-                "() => window.carrotquest && window.carrotquest.data && window.carrotquest.data.user ? window.carrotquest.data.user.id : null"
-            )
-            return str(user_id) if user_id else None
-        except Exception:
-            return None
+    async def get_cq_user_id(self, timeout_sec: float = 15) -> Optional[str]:
+        """Опрашивает window.carrotquest.data.user.id с ретраями, пока виджет инициализируется."""
+        js = (
+            "() => window.carrotquest && window.carrotquest.data && window.carrotquest.data.user "
+            "? window.carrotquest.data.user.id : null"
+        )
+        for _ in range(int(timeout_sec)):
+            try:
+                user_id = await self.page.evaluate(js)
+                if user_id:
+                    return str(user_id)
+            except Exception:
+                pass
+            await self.page.wait_for_timeout(1000)
+        return None
 
     async def navigate_to(self, url: str):
         await self.page.goto(url, wait_until="domcontentloaded", timeout=30_000)

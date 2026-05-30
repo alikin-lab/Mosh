@@ -23,6 +23,45 @@ def _nav_label(nav: NavEntry) -> str:
     return ACTION_LABELS.get(nav.action, nav.action)
 
 
+def _normalize_api_event(ev: dict) -> dict:
+    """Приводит событие CQ API к виду {ts, time, name, is_popup_send, message_name}."""
+    created = ev.get("created")
+    try:
+        ts = float(created)
+        time_str = datetime.fromtimestamp(ts).strftime("%H:%M:%S")
+    except (TypeError, ValueError):
+        ts, time_str = 0.0, str(created or "")
+
+    t = ev.get("type")
+    name = t.get("name") if isinstance(t, dict) else str(t)
+    props = ev.get("props") or {}
+    message_name = props.get("$message_name") or props.get("$message_part_name")
+
+    # Событие "отправлен попап/сообщение": системное $chat_bot_sent или
+    # пользовательское "Коммуникации: Отправлено сообщение - <название>"
+    is_send = (name == "$chat_bot_sent") or ("Отправлено сообщение" in (name or ""))
+
+    return {
+        "ts": ts,
+        "time": time_str,
+        "name": name,
+        "is_popup_send": is_send,
+        "message_name": message_name,
+    }
+
+
+def _popup_send_label(norm: dict) -> str:
+    """Чистое название отправленного попапа для отчёта."""
+    if norm.get("message_name"):
+        return norm["message_name"]
+    name = norm.get("name") or ""
+    if " - " in name:
+        return name.split(" - ", 1)[1]
+    if name == "$chat_bot_sent":
+        return "Сообщение лид-бота"
+    return name
+
+
 def report_dict(
     site_url: str,
     app_id: str,
@@ -67,6 +106,12 @@ def report_dict(
             for n in nav_log
         ],
         "api_event_count": len(api_events),
+        # Отправленные попапы/сообщения по данным CQ API: время + название
+        "popup_sends": [
+            {"time": n["time"], "name": _popup_send_label(n)}
+            for n in sorted((_normalize_api_event(e) for e in api_events), key=lambda x: x["ts"])
+            if n["is_popup_send"]
+        ],
     }
 
 
@@ -146,15 +191,28 @@ def generate_report(
         lines.append("")
 
     if api_events:
-        lines += ["**Последние события из API:**", "", "| Время | Тип события |", "|-------|-------------|"]
-        for ev in api_events[:20]:
-            created = ev.get("created", "")
-            try:
-                created = datetime.fromisoformat(created.replace("Z", "+00:00")).strftime("%H:%M:%S")
-            except Exception:
-                pass
-            lines.append(f"| {created} | `{ev.get('type', '—')}` |")
+        norm = sorted((_normalize_api_event(e) for e in api_events), key=lambda x: x["ts"])
+        sends = [n for n in norm if n["is_popup_send"]]
+
+        # Отправленные попапы/сообщения — с таймингами и названиями
+        lines += ["---", "## 📨 Отправленные попапы/сообщения (CQ API)", ""]
+        if sends:
+            lines += ["| Время | Название попапа/сообщения |", "|-------|---------------------------|"]
+            for n in sends:
+                lines.append(f"| {n['time']} | {_popup_send_label(n)} |")
+        else:
+            lines.append("_Событий отправки попапов в карточке не найдено._")
+        lines.append("")
+
+        # Полная лента событий из карточки
+        lines += ["<details><summary>Все события из карточки</summary>", "",
+                  "| Время | Событие |", "|-------|---------|"]
+        for n in norm:
+            mark = " 📨" if n["is_popup_send"] else ""
+            lines.append(f"| {n['time']} | {n['name']}{mark} |")
+        lines += ["", "</details>"]
     else:
-        lines.append("_События не получены (пользователь не идентифицирован или ошибка API)_")
+        lines += ["---", "## 📨 События из карточки (CQ API)", "",
+                  "_События не получены (пользователь не идентифицирован или ошибка API)_"]
 
     return "\n".join(lines)
