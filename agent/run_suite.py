@@ -142,11 +142,15 @@ def main():
         print(f"   {mark} {verdict} · DOM-баги={bc} · сигнал-отправки={sb} · → {out_path}")
         reports.append(report_json)
 
-    # Сводка
+    # Сводка — два формата: markdown для чата + HTML-дашборд для браузера.
     summary_path = os.path.join(out_dir, "SUMMARY.md")
-    summary = build_summary(reports)
     with open(summary_path, "w", encoding="utf-8") as f:
-        f.write(summary)
+        f.write(build_summary(reports))
+    html_path = os.path.join(out_dir, "report.html")
+    if reports:
+        from .report_html import build_html
+        with open(html_path, "w", encoding="utf-8") as f:
+            f.write(build_html(reports))
 
     # Итоговый вердикт с run-токеном (доказательство реального прогона)
     elapsed = int(time.time() - suite_start)
@@ -163,7 +167,9 @@ def main():
     print(f"  Сценариев успешно: {len(reports)}/{len(scenarios)}")
     print(f"  Валидных: {n_valid} · без user_id: {n_noid} · фабрикаций: {n_fab}")
     print(f"  Всего DOM-багов: {total_bugs} · сигналов отправки (API): {total_send}")
-    print(f"  Сводка: {summary_path}")
+    print(f"  Сводка (markdown, для чата): {summary_path}")
+    if reports:
+        print(f"  Дашборд (HTML, для браузера): {html_path}")
     print("=" * 60)
 
     # Ненулевой код, если есть фабрикации или вообще нет валидных прогонов
