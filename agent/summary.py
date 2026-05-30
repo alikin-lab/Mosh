@@ -40,9 +40,13 @@ def build_summary(reports: list[dict]) -> str:
     site = next((r.get("site_url") for r in reports if r.get("site_url")), "—")
     date = (reports[0].get("started_at", "") or "")[:10]
 
+    def has_send_bug(r):
+        return len(r.get("send_bugs", [])) > 0
+
     total = len(reports)
-    with_bugs = [r for r in reports if r.get("bug_count", 0) > 0]
-    clean = [r for r in reports if r.get("bug_count", 0) == 0 and r.get("user_id")]
+    dom_bugs = [r for r in reports if r.get("bug_count", 0) > 0]
+    send_signal = [r for r in reports if has_send_bug(r)]
+    clean = [r for r in reports if r.get("bug_count", 0) == 0 and not has_send_bug(r) and r.get("user_id")]
     invalid = [r for r in reports if not r.get("user_id")]
 
     lines = [
@@ -51,13 +55,14 @@ def build_summary(reports: list[dict]) -> str:
         f"**Сайт:** {site}",
         f"**Дата:** {date}",
         f"**Сценариев прогнано:** {total}",
-        f"**С багами:** {len(with_bugs)} · **Чисто:** {len(clean)} · **Невалидных (нет user_id):** {len(invalid)}",
+        f"**С DOM-багами:** {len(dom_bugs)} · **С сигналом отправки (API):** {len(send_signal)} · "
+        f"**Чисто:** {len(clean)} · **Невалидных (нет user_id):** {len(invalid)}",
         "",
         "---",
         "## Результаты по сценариям",
         "",
-        "| Сценарий | Длит. | Баги | Вовлечённые попапы | Отпр. попапов | Карточка |",
-        "|----------|-------|------|--------------------|---------------|----------|",
+        "| Сценарий | Длит. | DOM-баги | Сигнал отправки | Вовлечённые попапы | Карточка |",
+        "|----------|-------|----------|-----------------|--------------------|----------|",
     ]
 
     for r in reports:
@@ -70,13 +75,16 @@ def build_summary(reports: list[dict]) -> str:
             bug_cell = f"🔴 {bc}"
         else:
             bug_cell = "✅ 0"
+        sb = r.get("send_bugs", [])
+        send_cell = f"🟠 {len(sb)}" if sb else "—"
         popups = set()
         for b in r.get("bugs", []):
             popups.update(b.get("popups_involved", []))
+        for b in sb:
+            popups.update(b.get("popups", []))
         popups_cell = ", ".join(sorted(popups)) if popups else "—"
-        sends = len(r.get("popup_sends", []))
         card = f"[ссылка]({r['card_url']})" if r.get("card_url") else "—"
-        lines.append(f"| {sid} | {dur} | {bug_cell} | {popups_cell} | {sends} | {card} |")
+        lines.append(f"| {sid} | {dur} | {bug_cell} | {send_cell} | {popups_cell} | {card} |")
 
     # Уникальные баги
     lines += ["", "---", "## Уникальные баги", ""]
@@ -90,9 +98,23 @@ def build_summary(reports: list[dict]) -> str:
     if bug_key:
         for (btype, popups), cnt in bug_key.most_common():
             name = "Наложение попапов" if btype == "overlap" else "Быстрое повторное появление"
-            lines.append(f"- 🔴 **{name}** — {', '.join(popups)} · воспроизведён в {cnt} сценариях")
+            lines.append(f"- 🔴 **{name}** (DOM) — {', '.join(popups)} · воспроизведён в {cnt} сценариях")
     else:
-        lines.append("_Багов не обнаружено._")
+        lines.append("_DOM-багов не обнаружено._")
+
+    # Уникальные сигналы по таймингам отправки (CQ API)
+    send_key = Counter()
+    for r in reports:
+        for b in r.get("send_bugs", []):
+            key = (b.get("type"), tuple(sorted(b.get("popups", []))))
+            send_key[key] += 1
+    if send_key:
+        lines += ["", "**По таймингам отправки (CQ API):**", ""]
+        for (btype, popups), cnt in send_key.most_common():
+            if btype == "send_concurrent":
+                lines.append(f"- 🟠 **Одновременная отправка** — {', '.join(popups)} · в {cnt} сценариях")
+            else:
+                lines.append(f"- 🟠 **Повторная отправка** — {', '.join(popups)} · в {cnt} сценариях")
 
     # Отправленные попапы (по всем сценариям)
     lines += ["", "---", "## Отправленные попапы/сообщения (по всем прогонам)", ""]

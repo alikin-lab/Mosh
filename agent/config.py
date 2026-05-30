@@ -33,3 +33,7 @@ DEBUG_SELECTORS = [
 RAPID_SUCCESSION_THRESHOLD_SEC = 60
 POLL_INTERVAL_SEC = 0.5
 CQ_INIT_WAIT_SEC = 3
+
+# Окно для бага по таймингам отправки (CQ API):
+# два РАЗНЫХ попапа, отправленных в пределах этого окна — "одновременная отправка".
+SEND_CONCURRENT_WINDOW_SEC = 15

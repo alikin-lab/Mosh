@@ -3,7 +3,7 @@ from typing import Optional
 
 from .popup_detector import Bug, PopupEvent
 from .browser_session import NavEntry
-from .config import POPUP_LABELS
+from .config import POPUP_LABELS, RAPID_SUCCESSION_THRESHOLD_SEC, SEND_CONCURRENT_WINDOW_SEC
 
 
 ACTION_LABELS = {
@@ -62,6 +62,52 @@ def _popup_send_label(norm: dict) -> str:
     return name
 
 
+def detect_send_bugs(
+    api_events: list[dict],
+    concurrent_window: float = SEND_CONCURRENT_WINDOW_SEC,
+    resend_window: float = RAPID_SUCCESSION_THRESHOLD_SEC,
+) -> list[dict]:
+    """Баги по таймингам ОТПРАВКИ попапов (данные CQ API), независимо от DOM.
+
+    - send_concurrent: два РАЗНЫХ попапа отправлены в пределах concurrent_window сек
+      (риск наложения на стороне доставки).
+    - send_rapid_resend: ОДИН и тот же попап отправлен повторно в пределах resend_window сек.
+    """
+    sends = sorted(
+        (n for n in (_normalize_api_event(e) for e in api_events) if n["is_popup_send"]),
+        key=lambda x: x["ts"],
+    )
+    bugs: list[dict] = []
+    seen: set = set()
+
+    for i in range(len(sends)):
+        for j in range(i + 1, len(sends)):
+            a, b = sends[i], sends[j]
+            interval = b["ts"] - a["ts"]
+            if interval > resend_window:
+                break  # дальше только больше — выходим из внутреннего цикла
+            na, nb = _popup_send_label(a), _popup_send_label(b)
+            if na == nb:
+                btype, key = "send_rapid_resend", ("resend", na)
+                window = resend_window
+            elif interval <= concurrent_window:
+                btype, key = "send_concurrent", ("concurrent", frozenset((na, nb)))
+                window = concurrent_window
+            else:
+                continue
+            if key in seen:
+                continue
+            seen.add(key)
+            bugs.append({
+                "type": btype,
+                "time": b["time"],
+                "popups": [na] if na == nb else [na, nb],
+                "interval_seconds": round(interval, 1),
+                "threshold_seconds": window,
+            })
+    return bugs
+
+
 def report_dict(
     site_url: str,
     app_id: str,
@@ -112,6 +158,8 @@ def report_dict(
             for n in sorted((_normalize_api_event(e) for e in api_events), key=lambda x: x["ts"])
             if n["is_popup_send"]
         ],
+        # Баги по таймингам отправки (независимый от DOM сигнал)
+        "send_bugs": detect_send_bugs(api_events),
     }
 
 
@@ -160,7 +208,25 @@ def generate_report(
                 lines.append(f"- Интервал: {bug.interval_seconds:.1f} сек (порог: 60 сек)")
             lines.append("")
     else:
-        lines += ["---", "## ✅ Багов не обнаружено", ""]
+        lines += ["---", "## ✅ Багов по DOM не обнаружено", ""]
+
+    # Баги по таймингам отправки (CQ API) — независимый сигнал
+    send_bugs = detect_send_bugs(api_events)
+    if send_bugs:
+        lines += ["---", f"## 🟠 Сигналы по таймингам отправки (CQ API): {len(send_bugs)}", ""]
+        for sb in send_bugs:
+            if sb["type"] == "send_concurrent":
+                lines.append(
+                    f"- 🟠 **Одновременная отправка** [{sb['time']}]: «{sb['popups'][0]}» и "
+                    f"«{sb['popups'][1]}» с разницей {sb['interval_seconds']} с "
+                    f"(окно {sb['threshold_seconds']} с)"
+                )
+            else:
+                lines.append(
+                    f"- 🟠 **Повторная отправка** [{sb['time']}]: «{sb['popups'][0]}» "
+                    f"повторно через {sb['interval_seconds']} с (порог {sb['threshold_seconds']} с)"
+                )
+        lines.append("")
 
     # Chronology
     lines += ["---", "## 📋 Хронология событий", ""]

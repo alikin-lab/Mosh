@@ -72,7 +72,10 @@ python -m agent.summary reports/<клиент> --out reports/<клиент>/SUMM
 scenario_id, scenario, site_url, user_id, card_url, duration_sec,
 bug_count, bugs[{type, timestamp, description, popups_involved, interval_seconds}],
 popup_events[], nav_log[], api_event_count,
-popup_sends[{time, name}]   ← тайминги и названия отправленных попапов (из CQ API карточки)
+popup_sends[{time, name}],  ← тайминги и названия отправленных попапов (из CQ API карточки)
+send_bugs[{type, time, popups, interval_seconds, threshold_seconds}]
+            ← баги по таймингам отправки: send_concurrent (2 разных попапа близко),
+              send_rapid_resend (один попап повторно). Независимы от DOM.
 ```
 
 **Важно про два сигнала бага:**
