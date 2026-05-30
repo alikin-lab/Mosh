@@ -60,6 +60,55 @@ class BrowserSession:
         await self.page.evaluate("window.scrollTo(0, 0)")
         self._log("scroll")
 
+    async def scroll_to(self, where: str = "bottom"):
+        """where: 'bottom' | 'top' | число 0..1 (доля высоты страницы)."""
+        if where == "bottom":
+            js = "window.scrollTo(0, document.body.scrollHeight)"
+        elif where == "top":
+            js = "window.scrollTo(0, 0)"
+        else:
+            try:
+                frac = max(0.0, min(1.0, float(where)))
+            except (TypeError, ValueError):
+                frac = 1.0
+            js = f"window.scrollTo(0, document.body.scrollHeight * {frac})"
+        await self.page.evaluate(js)
+        self._log("scroll")
+
+    async def exit_intent(self):
+        """Имитирует уход мыши за верхнюю кромку окна — типичный триггер exit-intent попапов."""
+        try:
+            await self.page.mouse.move(640, 400)
+            await self.page.mouse.move(10, 0)
+            await self.page.evaluate(
+                """() => {
+                    const opts = {clientX: 10, clientY: -8, relatedTarget: null, bubbles: true};
+                    document.dispatchEvent(new MouseEvent('mouseout', opts));
+                    document.dispatchEvent(new MouseEvent('mouseleave', opts));
+                    (document.documentElement || document.body).dispatchEvent(new MouseEvent('mouseleave', opts));
+                }"""
+            )
+        except Exception:
+            pass
+        self._log("exit_intent")
+
+    async def click(self, selector: str):
+        try:
+            await self.page.click(selector, timeout=5_000)
+        except Exception:
+            pass
+        self._log(f"click: {selector}")
+
+    async def open_chat(self):
+        """Пытается открыть виджет чата CQ (триггер для нотификации бота)."""
+        for sel in ("#carrot-messenger-collapsed-container", ".carrot-messenger-collapsed-frame", "[class*='messenger-collapsed']"):
+            try:
+                await self.page.click(sel, timeout=3_000)
+                break
+            except Exception:
+                continue
+        self._log("open_chat")
+
     async def wait(self, seconds: float):
         await self.page.wait_for_timeout(int(seconds * 1_000))
 

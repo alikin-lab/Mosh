@@ -1,0 +1,41 @@
+{
+  "site_url": "https://bitrix.carrotquest.ru",
+  "scenarios": [
+    {
+      "id": "linger-landing",
+      "title": "Долгое залипание на лендинге",
+      "description": "Пользователь медленно изучает главную, скроллит и уводит мышь к закрытию вкладки",
+      "steps": [
+        {"action": "wait", "seconds": 12},
+        {"action": "scroll", "to": "bottom"},
+        {"action": "wait", "seconds": 15},
+        {"action": "exit_intent"},
+        {"action": "wait", "seconds": 10}
+      ]
+    },
+    {
+      "id": "chat-and-browse",
+      "title": "Открыть чат и листать сайт",
+      "description": "Посетитель открывает чат и продолжает изучать сайт — проверка наложения нотификации бота и попапа",
+      "steps": [
+        {"action": "wait", "seconds": 6},
+        {"action": "open_chat"},
+        {"action": "wait", "seconds": 8},
+        {"action": "scroll", "to": "0.5"},
+        {"action": "wait", "seconds": 12}
+      ]
+    },
+    {
+      "id": "funnel-walk",
+      "title": "Быстрый проход по воронке",
+      "description": "Посетитель быстро переходит по ключевым страницам воронки до заявки",
+      "steps": [
+        {"action": "wait", "seconds": 5},
+        {"action": "navigate", "url": "https://bitrix.carrotquest.ru/products/"},
+        {"action": "wait", "seconds": 8},
+        {"action": "scroll", "to": "bottom"},
+        {"action": "wait", "seconds": 8}
+      ]
+    }
+  ]
+}

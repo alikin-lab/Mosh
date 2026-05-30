@@ -6,8 +6,68 @@ from .browser_session import NavEntry
 from .config import POPUP_LABELS
 
 
+ACTION_LABELS = {
+    "scroll": "Скролл страницы",
+    "exit_intent": "Exit-intent (увод мыши)",
+    "open_chat": "Открыт чат",
+}
+
+
 def _fmt(ts: float) -> str:
     return datetime.fromtimestamp(ts).strftime("%H:%M:%S")
+
+
+def _nav_label(nav: NavEntry) -> str:
+    if nav.url:
+        return f"Переход: {nav.url}"
+    return ACTION_LABELS.get(nav.action, nav.action)
+
+
+def report_dict(
+    site_url: str,
+    app_id: str,
+    bugs: list[Bug],
+    popup_events: list[PopupEvent],
+    nav_log: list[NavEntry],
+    api_events: list[dict],
+    session_start: float,
+    session_end: float,
+    user_id: Optional[str],
+    card_url: Optional[str],
+    scenario: str,
+    scenario_id: Optional[str] = None,
+) -> dict:
+    """Структурированный отчёт — для парсинга агентами (продакт/тестировщик)."""
+    return {
+        "scenario_id": scenario_id,
+        "scenario": scenario,
+        "site_url": site_url,
+        "app_id": app_id,
+        "user_id": user_id,
+        "card_url": card_url,
+        "started_at": datetime.fromtimestamp(session_start).isoformat(),
+        "duration_sec": int(session_end - session_start),
+        "bug_count": len(bugs),
+        "bugs": [
+            {
+                "type": b.bug_type,
+                "timestamp": _fmt(b.timestamp),
+                "description": b.description,
+                "popups_involved": [POPUP_LABELS.get(p, p) for p in b.popups_involved],
+                "interval_seconds": b.interval_seconds,
+            }
+            for b in bugs
+        ],
+        "popup_events": [
+            {"timestamp": _fmt(e.timestamp), "event": e.event_type, "popup": e.label}
+            for e in popup_events
+        ],
+        "nav_log": [
+            {"timestamp": _fmt(n.timestamp), "action": n.action, "url": n.url}
+            for n in nav_log
+        ],
+        "api_event_count": len(api_events),
+    }
 
 
 def generate_report(
@@ -64,8 +124,7 @@ def generate_report(
     # Merge nav log + popup events sorted by timestamp
     all_rows: list[tuple[float, str]] = []
     for nav in nav_log:
-        label = f"Переход: {nav.url}" if nav.url else "Скролл страницы"
-        all_rows.append((nav.timestamp, label))
+        all_rows.append((nav.timestamp, _nav_label(nav)))
     for ev in popup_events:
         action = "Появился" if ev.event_type == "appeared" else "Закрыт"
         is_bug_moment = any(

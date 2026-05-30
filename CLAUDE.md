@@ -44,11 +44,16 @@ python -m agent.test_runner \
 
 ## Типы попапов и CSS-селекторы
 
-| Тип | Селектор |
-|-----|----------|
-| CQ Конструктор | `[data-resize-popup]` |
-| JS Попап | `.cq-popup__body` |
-| Нотификация бота | `[data-resize-notification]` |
+Попапы CQ рендерятся **внутри iframe**, поэтому детектор обходит все фреймы (`page.frames`),
+а не только главный. Актуальные селекторы (см. `config.py`):
+
+| Тип | Селектор | Где |
+|-----|----------|-----|
+| CQ Конструктор | `.popup-block-container` | iframe `carrot-popup-frame` |
+| JS Попап | `#popup-card` | кастомный, специфичен для сайта |
+| Нотификация / правый виджет | `.cq-wrapper` | iframe `carrot-messenger-tooltip` |
+
+Для разведки селекторов на новом сайте: `--debug` (дампит все popup-like элементы из всех фреймов).
 
 ## Типы багов
 
@@ -72,7 +77,30 @@ window.carrotquest?.data?.user?.id
 ```
 Этот ID используется для запросов к API (`/users/{id}/events`).
 
-## Добавление новых тест-кейсов (V2+)
+## Режим сценариев (команда агентов)
+
+Помимо легаси-флагов, `test_runner` умеет исполнять структурированные сценарии:
+
+```bash
+python -m agent.test_runner \
+  --scenario-file scenarios/client.json \
+  --scenario-id linger-landing \
+  --json-out reports/linger-landing.json
+```
+
+- Контракт сценария — `agent/scenario.py` (действия: navigate, wait, scroll, exit_intent, click, open_chat).
+- Пример файла — `scenarios/example.json`.
+- `--json-out` пишет структурированный отчёт (для парсинга агентами).
+
+## Команда агентов (продакт + тестировщик)
+
+Архитектура «мозги в агентах»: генерация сценариев и ревью — LLM-агенты по плейбукам,
+исполнение прогонов и детекция — детерминированный код `agent/`.
+
+- Плейбуки и автономный флоу: `agents/README.md`, `agents/product_agent.md`, `agents/tester_agent.md`
+- Обмен через файлы: продакт пишет `scenarios/*.json`, тестировщик — `reports/*.json`
+
+## Добавление новых детекторов (V2+)
 
 1. Создать новый детектор по образцу `popup_detector.py`
 2. Подключить в `test_runner.py` рядом с `PopupDetector`
