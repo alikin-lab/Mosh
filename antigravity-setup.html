@@ -181,9 +181,11 @@ Basic Auth: carrotadmin / &lt;пароль&gt; (если сайт под пар�
     <!-- 10 -->
     <div class="step">
       <div class="step-head"><div class="step-num">10</div><div class="step-title">Проверка вручную (необязательно)</div></div>
-      <p>Чтобы убедиться, что всё работает, можно прогнать один готовый сценарий напрямую:</p>
-      <div class="code" data-copy='python -m agent.test_runner --scenario-file scenarios/example.json --scenario-id chat-and-browse --json-out reports/test.json --no-headless'><button class="copy-btn">копировать</button>python -m agent.test_runner --scenario-file scenarios/example.json --scenario-id chat-and-browse --json-out reports/test.json --no-headless</div>
-      <p style="margin-top:.6rem">Сайт под паролем — добавь <code>--http-user ЛОГИН --http-pass "ПАРОЛЬ"</code>.</p>
+      <p>Чтобы убедиться, что всё работает, прогони всю серию одной командой и проверь целостность:</p>
+      <div class="code" data-copy='python -m agent.run_suite --scenario-file scenarios/bitrix.json --no-headless
+python -m agent.validate reports/bitrix.carrotquest.ru'><button class="copy-btn">копировать</button>python -m agent.run_suite --scenario-file scenarios/bitrix.json --no-headless
+python -m agent.validate reports/bitrix.carrotquest.ru</div>
+      <p style="margin-top:.6rem">Сайт под паролем — добавь <code>--http-user ЛОГИН --http-pass "ПАРОЛЬ"</code>. В конце <code>run_suite</code> печатает <code>run_token</code>, а <code>validate</code> должен сказать <code>✅ Все … валидны</code>.</p>
     </div>
 
     <div class="divider">— Если что-то пошло не так —</div>
@@ -191,6 +193,7 @@ Basic Auth: carrotadmin / &lt;пароль&gt; (если сайт под пар�
     <div class="callout warn"><span class="ico">🕵️</span><div><strong>В отчёте <code>user_id: не определён</code> и нет попапов?</strong> Скорее всего запуск в headless — CQ-виджет не грузится. Гоняй с <code>--no-headless</code> (в Linux/AntiGravity — под виртуальным дисплеем <code>xvfb</code>).</div></div>
     <div class="callout warn"><span class="ico">🔑</span><div><strong>Сайт открывается с ошибкой авторизации?</strong> Он под HTTP Basic Auth — передай <code>--http-user</code> и <code>--http-pass</code>.</div></div>
     <div class="callout info"><span class="ico">🧩</span><div><strong>Попапы не находятся на новом сайте?</strong> Запусти с флагом <code>--debug</code> — он выгрузит все popup-подобные элементы из всех фреймов, чтобы найти реальные селекторы.</div></div>
+    <div class="callout warn"><span class="ico">🤥</span><div><strong>Агент рапортует «0 багов», но в отчётах <code>user_id: 10001</code> и поля вроде <code>status</code>?</strong> Это <strong>фабрикация</strong> — агент сочинил отчёт, не запустив прогон. Прогони <code>python -m agent.validate reports/&lt;host&gt;</code>: настоящий вывод раннера помечается <code>✅ VALID</code>, выдумка — <code>❌ FABRICATED</code>. Требуй честный перепрогон через <code>agent.run_suite</code>.</div></div>
 
     <footer>
       <p>Mosh · CQ Popup QA Agent · <a href="https://github.com/alikin-lab/Mosh">github.com/alikin-lab/Mosh</a></p>

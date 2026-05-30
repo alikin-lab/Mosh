@@ -18,6 +18,8 @@ from collections import Counter
 
 sys.stdout.reconfigure(encoding="utf-8")
 
+from .validate import validate_report, VALID, FABRICATED, NO_USER_ID
+
 
 def _load_reports(folder: str) -> list[dict]:
     reports = []
@@ -40,23 +42,43 @@ def build_summary(reports: list[dict]) -> str:
     site = next((r.get("site_url") for r in reports if r.get("site_url")), "—")
     date = (reports[0].get("started_at", "") or "")[:10]
 
+    # Страж целостности: отсеиваем сочинённые агентом отчёты до подсчёта статистики.
+    verdicts = {id(r): validate_report(r)[0] for r in reports}
+    fabricated = [r for r in reports if verdicts[id(r)] == FABRICATED]
+
     def has_send_bug(r):
         return len(r.get("send_bugs", [])) > 0
 
     total = len(reports)
-    dom_bugs = [r for r in reports if r.get("bug_count", 0) > 0]
-    send_signal = [r for r in reports if has_send_bug(r)]
-    clean = [r for r in reports if r.get("bug_count", 0) == 0 and not has_send_bug(r) and r.get("user_id")]
-    invalid = [r for r in reports if not r.get("user_id")]
+    dom_bugs = [r for r in reports if verdicts[id(r)] != FABRICATED and r.get("bug_count", 0) > 0]
+    send_signal = [r for r in reports if verdicts[id(r)] != FABRICATED and has_send_bug(r)]
+    clean = [r for r in reports if verdicts[id(r)] == VALID
+             and r.get("bug_count", 0) == 0 and not has_send_bug(r)]
+    invalid = [r for r in reports if verdicts[id(r)] == NO_USER_ID]
 
     lines = [
         "# 📊 Сводный отчёт тестирования попапов",
         "",
+    ]
+
+    # Баннер о фабрикации — наверх, чтобы продакт не доверял подделанным данным.
+    if fabricated:
+        bad = ", ".join(r.get("scenario_id") or "—" for r in fabricated)
+        lines += [
+            "> ❌ **ВНИМАНИЕ: обнаружена фабрикация отчётов.** "
+            f"{len(fabricated)} из {total} отчётов НЕ являются выводом реального прогона "
+            f"(`{bad}`). Статистике ниже доверять нельзя — нужен честный перепрогон через "
+            "`python -m agent.run_suite`. Подробности: `python -m agent.validate <папка>`.",
+            "",
+        ]
+
+    lines += [
         f"**Сайт:** {site}",
         f"**Дата:** {date}",
         f"**Сценариев прогнано:** {total}",
         f"**С DOM-багами:** {len(dom_bugs)} · **С сигналом отправки (API):** {len(send_signal)} · "
-        f"**Чисто:** {len(clean)} · **Невалидных (нет user_id):** {len(invalid)}",
+        f"**Чисто:** {len(clean)} · **Невалидных (нет user_id):** {len(invalid)} · "
+        f"**Фабрикаций:** {len(fabricated)}",
         "",
         "---",
         "## Результаты по сценариям",
@@ -69,7 +91,9 @@ def build_summary(reports: list[dict]) -> str:
         sid = r.get("scenario_id") or "—"
         dur = f"{r.get('duration_sec', 0)} c"
         bc = r.get("bug_count", 0)
-        if not r.get("user_id"):
+        if verdicts[id(r)] == FABRICATED:
+            bug_cell = "❌ фейк"
+        elif verdicts[id(r)] == NO_USER_ID:
             bug_cell = "⚠️ невалид"
         elif bc:
             bug_cell = f"🔴 {bc}"

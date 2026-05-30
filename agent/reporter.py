@@ -12,6 +12,9 @@ ACTION_LABELS = {
     "open_chat": "Открыт чат",
 }
 
+# Версия схемы структурированного отчёта. Повышать при изменении набора полей report_dict.
+REPORT_SCHEMA_VERSION = 1
+
 
 def _fmt(ts: float) -> str:
     return datetime.fromtimestamp(ts).strftime("%H:%M:%S")
@@ -124,6 +127,10 @@ def report_dict(
 ) -> dict:
     """Структурированный отчёт — для парсинга агентами (продакт/тестировщик)."""
     return {
+        # Маркер происхождения: настоящий отчёт пишет ТОЛЬКО test_runner.
+        # Валидатор (agent/validate.py) проверяет его, чтобы отсеять выдуманные агентом отчёты.
+        "generated_by": "agent.test_runner",
+        "schema_version": REPORT_SCHEMA_VERSION,
         "scenario_id": scenario_id,
         "scenario": scenario,
         "site_url": site_url,
