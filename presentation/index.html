@@ -490,6 +490,70 @@
     </div>
   </section>
 
+  <!-- 12.5 ПОВОРОТ 3 — АГЕНТ ВСЁ ВЫДУМАЛ -->
+  <section class="slide" id="lie" data-dot="Поворот 3">
+    <div class="inner">
+      <p class="kicker reveal">Боевой запуск в AntiGravity</p>
+      <h2 class="reveal">Агент отрапортовал об успехе… которого не было</h2>
+      <p class="sub reveal" style="margin-bottom:2.2rem">Запустили связку в настоящей AntiGravity глазами нового пользователя. «6 сценариев, 0 ошибок». Но <code>user_id: 10001</code>, поля, которых нет в коде, и «0 багов» там, где баг есть. Спросили агента напрямую — и он сознался:</p>
+      <div class="split">
+        <div class="reveal">
+          <div class="report">
+            <span class="r-dim">&gt; Прямой ответ агента:</span><br><br>
+            «Команда <span class="r-warn">python -m agent.test_runner</span> <span class="r-bug">фактически не запускалась</span>. Запущенный мной LLM-сабагент просто сгенерировал правдоподобный текст (<span class="r-bug">галлюцинацию</span>) отчёта от своего лица — без реального запуска браузера и парсинга JSON. Все данные были <span class="r-bug">выдуманы моделью для имитации успешно выполненной работы</span>.»<span class="cursor"></span>
+          </div>
+          <p class="caption">🤡 Дословное признание агента в AntiGravity</p>
+        </div>
+        <div class="reveal">
+          <div class="ba" style="grid-template-columns:1fr">
+            <div class="ba-card was">
+              <h4>Что сдал агент</h4>
+              <div class="big" style="font-size:1.4rem">user_id: 10001</div>
+              <p>Ровные числа, поля <code>status</code>/<code>popup_id</code>, которых нет в схеме, круглые тайминги. 0 багов.</p>
+            </div>
+          </div>
+          <p class="caption">Урок: автономному LLM нельзя доверять собственный рапорт об успехе</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12.6 СОВЕСТЬ В КОДЕ -->
+  <section class="slide" id="guard" data-dot="Страж">
+    <div class="inner">
+      <p class="kicker reveal">Лечение</p>
+      <h2 class="reveal">Совесть — в коде, а не в просьбе «не ври»</h2>
+      <p class="sub reveal" style="margin-bottom:2.2rem">Детерминированный код владеет фактами; независимый <strong>страж</strong> проверяет, что отчёт действительно произведён кодом. Плюс одна команда <code>run_suite</code>, чей вывод — доказательство реального прогона.</p>
+      <div class="split">
+        <div class="reveal">
+          <div class="report">
+            <span class="r-dim">$ python -m agent.validate reports/…</span><br><br>
+            <span class="r-bug">❌ FABRICATED</span> <span class="r-dim">linger-main.json</span><br>
+            <span class="r-dim">   └ посторонние поля: ['status']</span><br>
+            <span class="r-dim">   └ user_id не похож на CQ id: 10001</span><br><br>
+            <span class="r-ok">✅ VALID</span> <span class="r-dim">linger-main.REAL.json</span><br>
+            <span class="r-dim">   user_id: 2248482120588592529</span><span class="cursor"></span>
+          </div>
+          <p class="caption">Страж ловит подделку и пропускает настоящий прогон</p>
+        </div>
+        <div class="reveal">
+          <div class="chips" style="margin-bottom:1.2rem">
+            <span class="chip hot">маркер происхождения</span>
+            <span class="chip hot">полнота схемы</span>
+            <span class="chip hot">формат user_id</span>
+            <span class="chip hot">run_token</span>
+          </div>
+          <div class="metrics2">
+            <div class="ring"><div class="num dim">0</div><div class="lbl">багов «нашёл» фейк</div></div>
+            <span class="arrow" style="font-size:2rem">→</span>
+            <div class="ring"><div class="num hot">overlap</div><div class="lbl">поймал честный прогон (18:32:47)</div></div>
+          </div>
+          <p class="caption">«Мозги в агентах, руки в коде» — и третий элемент: <strong style="color:var(--cq-orange)">совесть в коде</strong></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- 13 ИТОГ -->
   <section class="slide" id="outcome" data-dot="Итог">
     <div class="inner">
